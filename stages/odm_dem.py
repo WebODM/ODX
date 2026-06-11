@@ -95,7 +95,7 @@ class ODMDEMStage(types.ODM_Stage):
                         generate_dem_tiles(dem_geotiff_path, tree.path("%s_tiles" % product), args.max_concurrency, resolution)
                     
                     if args.cog:
-                        convert_to_cogeo(dem_geotiff_path, max_workers=args.max_concurrency)
+                        convert_to_cogeo(dem_geotiff_path, max_workers=args.max_concurrency, deflate_predictor=3)
 
                     progress += 40
                     self.update_progress(progress)

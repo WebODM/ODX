@@ -309,7 +309,7 @@ class ODMMergeStage(types.ODM_Stage):
                         add_raster_meta_tags(dem_file, reconstruction, tree, embed_gcp_meta=False)
 
                         if args.cog:
-                            convert_to_cogeo(dem_file, max_workers=args.max_concurrency)
+                            convert_to_cogeo(dem_file, max_workers=args.max_concurrency, deflate_predictor=3)
                     else:
                         log.WARNING("Cannot merge %s, %s was not created" % (human_name, dem_file))
                 
