@@ -236,6 +236,7 @@ def median_smoothing(geotiff_path, output_path, window_size=512, num_workers=1, 
                 '--window-size {window} '
                 '--radius {radius} '
                 '--co TILED=YES '
+                '--co PREDICTOR=3 '
                 '--co BIGTIFF=IF_SAFER '
                 '--co COMPRESS=DEFLATE '.format(**kwargs), env_vars={'OMP_NUM_THREADS': num_workers})
 
