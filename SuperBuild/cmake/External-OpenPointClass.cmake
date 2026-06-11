@@ -9,7 +9,7 @@ ExternalProject_Add(${_proj_name}
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
   GIT_REPOSITORY    https://github.com/uav4geo/OpenPointClass
-  GIT_TAG           f714fecd1f7f5fe5fd66dc9fafc0aac022c7f6d6
+  GIT_TAG           89fe7218004c82f1db2151a41968544d6b64c4b2
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------

@@ -9,7 +9,7 @@ ExternalProject_Add(${_proj_name}
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
   GIT_REPOSITORY    https://github.com/WebODM/RenderDEM
-  GIT_TAG           dc5550a3992a164dd6d3a4bb06561f0720d84394
+  GIT_TAG           fae6445613e2f65d2e75963afa08e2238046d4dc
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------
