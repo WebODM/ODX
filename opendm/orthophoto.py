@@ -368,8 +368,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                          for _, dst_window in dstrast.block_windows()]
         total_blocks = len(block_windows)
         progress_lock = threading.Lock()
-        progress = {"done": 0}
-        log_every = max(1, total_blocks // 20)
+        progress = {"done": 0, "last_pct": -1}
 
         opened_sources = []
         opened_lock = threading.Lock()
@@ -394,7 +393,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
 
             Runs the naive-copy, feather-blend, and cutline-blend passes into a
             block-local array, then writes it to the shared output dataset under
-            write_lock. Updates the shared progress counter (logged every ~5%).
+            write_lock. Updates the shared progress counter (logged at each % increase).
             """
 
             try:
@@ -402,8 +401,10 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                 with progress_lock:
                     progress["done"] += 1
                     n = progress["done"]
-                if n % log_every == 0:
-                    log.INFO("Orthophoto merge: [%s/%s]" % (n, total_blocks))
+                    pct = int((n * 100) // total_blocks)
+                    if pct > progress["last_pct"]:
+                        progress["last_pct"] = pct
+                        log.INFO("Orthophoto merge [%d%%]" % pct)
 
                 local_sources = get_sources()
 
