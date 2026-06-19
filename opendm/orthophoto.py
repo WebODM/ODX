@@ -401,90 +401,94 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
             If merge_skip_blending is set, only the naive-copy pass runs and the
             block is written immediately.
             """
-            dst_window, (left, bottom, right, top) = item
-            with progress_lock:
-                progress["done"] += 1
-                n = progress["done"]
-            if n % log_every == 0:
-                log.ODM_INFO("Merging orthophoto: %s / %s blocks" % (n, total_blocks))
 
-            local_sources = get_sources()
+            try:
+                dst_window, (left, bottom, right, top) = item
+                with progress_lock:
+                    progress["done"] += 1
+                    n = progress["done"]
+                if n % log_every == 0:
+                    log.INFO("Orthophoto: %s / %s blocks" % (n, total_blocks))
 
-            blocksize = dst_window.width
-            dst_rows, dst_cols = (dst_window.height, dst_window.width)
-            dst_shape = (dst_count, dst_rows, dst_cols)
+                local_sources = get_sources()
 
-            dstarr = np.zeros(dst_shape, dtype=dtype)
+                blocksize = dst_window.width
+                dst_rows, dst_cols = (dst_window.height, dst_window.width)
+                dst_shape = (dst_count, dst_rows, dst_cols)
 
-            # First pass, write all rasters naively without blending
-            for src, _ in local_sources:
-                src_window = tuple(zip(rowcol(
-                        src.transform, left, top, op=round, precision=precision
-                    ), rowcol(
-                        src.transform, right, bottom, op=round, precision=precision
-                    )))
+                dstarr = np.zeros(dst_shape, dtype=dtype)
 
-                temp = np.zeros(dst_shape, dtype=dtype)
-                temp = src.read(
-                    out=temp, window=src_window, boundless=True, masked=False
-                )
+                # First pass, write all rasters naively without blending
+                for src, _ in local_sources:
+                    src_window = tuple(zip(rowcol(
+                            src.transform, left, top, op=round, precision=precision
+                        ), rowcol(
+                            src.transform, right, bottom, op=round, precision=precision
+                        )))
 
-                # pixels without data yet are available to write
-                write_region = np.logical_and(
-                    (dstarr[-1] == 0), (temp[-1] != 0)  # 0 is nodata
-                )
-                np.copyto(dstarr, temp, where=write_region)
+                    temp = np.zeros(dst_shape, dtype=dtype)
+                    temp = src.read(
+                        out=temp, window=src_window, boundless=True, masked=False
+                    )
 
-                # check if dest has any nodata pixels available
-                if np.count_nonzero(dstarr[-1]) == blocksize:
-                    break
+                    # pixels without data yet are available to write
+                    write_region = np.logical_and(
+                        (dstarr[-1] == 0), (temp[-1] != 0)  # 0 is nodata
+                    )
+                    np.copyto(dstarr, temp, where=write_region)
 
-            # Second pass, write all feathered rasters
-            # blending the edges
-            for src, _ in local_sources:
-                src_window = tuple(zip(rowcol(
-                        src.transform, left, top, op=round, precision=precision
-                    ), rowcol(
-                        src.transform, right, bottom, op=round, precision=precision
-                    )))
+                    # check if dest has any nodata pixels available
+                    if np.count_nonzero(dstarr[-1]) == blocksize:
+                        break
 
-                temp = np.zeros(dst_shape, dtype=dtype)
-                temp = src.read(
-                    out=temp, window=src_window, boundless=True, masked=False
-                )
+                # Second pass, write all feathered rasters
+                # blending the edges
+                for src, _ in local_sources:
+                    src_window = tuple(zip(rowcol(
+                            src.transform, left, top, op=round, precision=precision
+                        ), rowcol(
+                            src.transform, right, bottom, op=round, precision=precision
+                        )))
 
-                where = temp[-1] != 0
-                for b in range(0, num_bands):
-                    blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
-                    np.copyto(dstarr[b], blended, casting='unsafe', where=where)
-                dstarr[-1][where] = 255.0
+                    temp = np.zeros(dst_shape, dtype=dtype)
+                    temp = src.read(
+                        out=temp, window=src_window, boundless=True, masked=False
+                    )
 
-                # check if dest has any nodata pixels available
-                if np.count_nonzero(dstarr[-1]) == blocksize:
-                    break
+                    where = temp[-1] != 0
+                    for b in range(0, num_bands):
+                        blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
+                        np.copyto(dstarr[b], blended, casting='unsafe', where=where)
+                    dstarr[-1][where] = 255.0
 
-            # Third pass, write cut rasters
-            # blending the cutlines
-            for _, cut in local_sources:
-                src_window = tuple(zip(rowcol(
-                        cut.transform, left, top, op=round, precision=precision
-                    ), rowcol(
-                        cut.transform, right, bottom, op=round, precision=precision
-                    )))
+                    # check if dest has any nodata pixels available
+                    if np.count_nonzero(dstarr[-1]) == blocksize:
+                        break
 
-                temp = np.zeros(dst_shape, dtype=dtype)
-                temp = cut.read(
-                    out=temp, window=src_window, boundless=True, masked=False
-                )
+                # Third pass, write cut rasters
+                # blending the cutlines
+                for _, cut in local_sources:
+                    src_window = tuple(zip(rowcol(
+                            cut.transform, left, top, op=round, precision=precision
+                        ), rowcol(
+                            cut.transform, right, bottom, op=round, precision=precision
+                        )))
 
-                # For each band, average alpha values between
-                # destination raster and cut raster
-                for b in range(0, num_bands):
-                    blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
-                    np.copyto(dstarr[b], blended, casting='unsafe', where=temp[-1]!=0)
+                    temp = np.zeros(dst_shape, dtype=dtype)
+                    temp = cut.read(
+                        out=temp, window=src_window, boundless=True, masked=False
+                    )
 
-            with write_lock:
-                dstrast.write(dstarr, window=dst_window)
+                    # For each band, average alpha values between
+                    # destination raster and cut raster
+                    for b in range(0, num_bands):
+                        blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
+                        np.copyto(dstarr[b], blended, casting='unsafe', where=temp[-1]!=0)
+
+                with write_lock:
+                    dstrast.write(dstarr, window=dst_window)
+            except Exception as e:
+                log.WARNING(str(e))
 
         parallel_map(process_block, block_windows, max_workers)
 
