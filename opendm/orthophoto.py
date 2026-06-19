@@ -1,8 +1,9 @@
 import os
+import threading
 from opendm import log
 from opendm import system
 from opendm.cropper import Cropper
-from opendm.concurrency import get_max_memory
+from opendm.concurrency import get_max_memory, parallel_map
 import math
 import numpy as np
 import rasterio
@@ -265,10 +266,25 @@ def feather_raster(input_raster, output_raster, blend_distance=20):
 
         return output_raster
 
-def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
+def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max_workers=1):
     """
     Based on https://github.com/mapbox/rio-merge-rgba/
     Merge orthophotos around cutlines using a blend buffer.
+
+    Each output block is an independent pure function of its source windows and
+    the fixed source ordering, so blocks are processed in parallel. With
+    max_workers <= 1 (the default) processing is strictly serial and the output
+    is byte-for-byte identical to the original single-threaded loop.
+
+    Args:
+        input_ortho_and_ortho_cuts: iterable of (orthophoto_path, cut_path) pairs.
+        output_orthophoto: path for the merged output GeoTIFF.
+        orthophoto_vars: rasterio profile overrides (TILED, COMPRESS, etc.).
+        merge_skip_blending: if True, skip the feather and cutline blend passes
+            (only the naive-copy pass 1 runs); faster but no blending at seams.
+        max_workers: number of parallel worker threads (default 1 = serial).
+    Returns:
+        The output_orthophoto path, or None if there were no valid inputs.
     """
     inputs = []
     bounds=None
@@ -293,6 +309,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
         profile = first.profile
         num_bands = first.meta['count'] - 1 # minus alpha
         colorinterp = first.colorinterp
+        dst_count = first.count
 
     log.INFO("%s valid orthophoto rasters to merge" % len(inputs))
     sources = [(rasterio.open(o), rasterio.open(c)) for o,c in inputs]
@@ -308,6 +325,10 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
         if src.profile["count"] < 2:
             raise ValueError("Inputs must be at least 2-band rasters")
     dst_w, dst_s, dst_e, dst_n = min(xs), min(ys), max(xs), max(ys)
+    # Close the pre-scan handles; they are unused in the parallel block loop.
+    for s, c in sources:
+        s.close()
+        c.close()
     log.INFO("Output bounds: %r %r %r %r" % (dst_w, dst_s, dst_e, dst_n))
 
     output_transform = Affine.translation(dst_w, dst_n)
@@ -337,20 +358,66 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
     # create destination file
     with rasterio.open(output_orthophoto, "w", **profile) as dstrast:
         dstrast.colorinterp = colorinterp
-        for idx, dst_window in dstrast.block_windows():
-            left, bottom, right, top = dstrast.window_bounds(dst_window)
+
+        # Each output block is an independent function of its source windows and
+        # the source ordering, so blocks can be processed in parallel. GDAL/rasterio
+        # datasets are not thread-safe on a single handle, so each worker thread
+        # opens its own source handles (thread-local), and writes to the single
+        # output dataset are serialized under a lock. With max_workers <= 1,
+        # parallel_map runs serially and behavior is identical to the original loop.
+        write_lock = threading.Lock()
+        tls = threading.local()
+        block_windows = [(dst_window, dstrast.window_bounds(dst_window))
+                         for _, dst_window in dstrast.block_windows()]
+        total_blocks = len(block_windows)
+        progress_lock = threading.Lock()
+        progress = {"done": 0}
+        log_every = max(1, total_blocks // 20)
+
+        opened_sources = []
+        opened_lock = threading.Lock()
+
+        def get_sources():
+            """Return this thread's (ortho, cut) rasterio dataset handles.
+
+            GDAL/rasterio handles are not safe to share across threads, so each
+            worker thread lazily opens and caches its own set on first use and
+            registers it in opened_sources for cleanup after the parallel run.
+            """
+            srcs = getattr(tls, "sources", None)
+            if srcs is None:
+                srcs = [(rasterio.open(o), rasterio.open(c)) for o, c in inputs]
+                tls.sources = srcs
+                with opened_lock:
+                    opened_sources.append(srcs)
+            return srcs
+
+        def process_block(item):
+            """Compute and write one output block (rasterio Window).
+
+            Runs the naive-copy, feather-blend, and cutline-blend passes into a
+            block-local array, then writes it to the shared output dataset under
+            write_lock. Updates the shared progress counter (logged every ~5%).
+            If merge_skip_blending is set, only the naive-copy pass runs and the
+            block is written immediately.
+            """
+            dst_window, (left, bottom, right, top) = item
+            with progress_lock:
+                progress["done"] += 1
+                n = progress["done"]
+            if n % log_every == 0:
+                log.ODM_INFO("Merging orthophoto: %s / %s blocks" % (n, total_blocks))
+
+            local_sources = get_sources()
 
             blocksize = dst_window.width
             dst_rows, dst_cols = (dst_window.height, dst_window.width)
-
-            # initialize array destined for the block
-            dst_count = first.count
             dst_shape = (dst_count, dst_rows, dst_cols)
 
             dstarr = np.zeros(dst_shape, dtype=dtype)
 
             # First pass, write all rasters naively without blending
-            for src, _ in sources:
+            for src, _ in local_sources:
                 src_window = tuple(zip(rowcol(
                         src.transform, left, top, op=round, precision=precision
                     ), rowcol(
@@ -374,7 +441,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
 
             # Second pass, write all feathered rasters
             # blending the edges
-            for src, _ in sources:
+            for src, _ in local_sources:
                 src_window = tuple(zip(rowcol(
                         src.transform, left, top, op=round, precision=precision
                     ), rowcol(
@@ -391,14 +458,14 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
                     blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
                     np.copyto(dstarr[b], blended, casting='unsafe', where=where)
                 dstarr[-1][where] = 255.0
-                
+
                 # check if dest has any nodata pixels available
                 if np.count_nonzero(dstarr[-1]) == blocksize:
                     break
 
             # Third pass, write cut rasters
             # blending the cutlines
-            for _, cut in sources:
+            for _, cut in local_sources:
                 src_window = tuple(zip(rowcol(
                         cut.transform, left, top, op=round, precision=precision
                     ), rowcol(
@@ -416,6 +483,15 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}):
                     blended = temp[-1] / 255.0 * temp[b] + (1 - temp[-1] / 255.0) * dstarr[b]
                     np.copyto(dstarr[b], blended, casting='unsafe', where=temp[-1]!=0)
 
-            dstrast.write(dstarr, window=dst_window)
+            with write_lock:
+                dstrast.write(dstarr, window=dst_window)
+
+        parallel_map(process_block, block_windows, max_workers)
+
+        # Close all thread-local source handles opened during the parallel run.
+        for srcs in opened_sources:
+            for s, c in srcs:
+                s.close()
+                c.close()
 
     return output_orthophoto
