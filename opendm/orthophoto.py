@@ -483,7 +483,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                 with write_lock:
                     dstrast.write(dstarr, window=dst_window)
             except Exception as e:
-                log.WARNING(str(e))
+                log.WARNING("Orthophoto merge block failed: %s" % str(e))
 
         parallel_map(process_block, block_windows, max_workers)
 
