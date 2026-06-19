@@ -280,15 +280,12 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
         input_ortho_and_ortho_cuts: iterable of (orthophoto_path, cut_path) pairs.
         output_orthophoto: path for the merged output GeoTIFF.
         orthophoto_vars: rasterio profile overrides (TILED, COMPRESS, etc.).
-        merge_skip_blending: if True, skip the feather and cutline blend passes
-            (only the naive-copy pass 1 runs); faster but no blending at seams.
         max_workers: number of parallel worker threads (default 1 = serial).
     Returns:
         The output_orthophoto path, or None if there were no valid inputs.
     """
     inputs = []
     bounds=None
-    precision=7
 
     for o, c in input_ortho_and_ortho_cuts:
         if not io.file_exists(o):
@@ -398,8 +395,6 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
             Runs the naive-copy, feather-blend, and cutline-blend passes into a
             block-local array, then writes it to the shared output dataset under
             write_lock. Updates the shared progress counter (logged every ~5%).
-            If merge_skip_blending is set, only the naive-copy pass runs and the
-            block is written immediately.
             """
 
             try:
@@ -408,7 +403,7 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                     progress["done"] += 1
                     n = progress["done"]
                 if n % log_every == 0:
-                    log.INFO("Orthophoto: %s / %s blocks" % (n, total_blocks))
+                    log.INFO("Orthophoto merge: [%s/%s]" % (n, total_blocks))
 
                 local_sources = get_sources()
 
@@ -421,9 +416,9 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                 # First pass, write all rasters naively without blending
                 for src, _ in local_sources:
                     src_window = tuple(zip(rowcol(
-                            src.transform, left, top, op=round, precision=precision
+                            src.transform, left, top, op=round
                         ), rowcol(
-                            src.transform, right, bottom, op=round, precision=precision
+                            src.transform, right, bottom, op=round
                         )))
 
                     temp = np.zeros(dst_shape, dtype=dtype)
@@ -445,9 +440,9 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                 # blending the edges
                 for src, _ in local_sources:
                     src_window = tuple(zip(rowcol(
-                            src.transform, left, top, op=round, precision=precision
+                            src.transform, left, top, op=round
                         ), rowcol(
-                            src.transform, right, bottom, op=round, precision=precision
+                            src.transform, right, bottom, op=round
                         )))
 
                     temp = np.zeros(dst_shape, dtype=dtype)
@@ -469,9 +464,9 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
                 # blending the cutlines
                 for _, cut in local_sources:
                     src_window = tuple(zip(rowcol(
-                            cut.transform, left, top, op=round, precision=precision
+                            cut.transform, left, top, op=round
                         ), rowcol(
-                            cut.transform, right, bottom, op=round, precision=precision
+                            cut.transform, right, bottom, op=round
                         )))
 
                     temp = np.zeros(dst_shape, dtype=dtype)
