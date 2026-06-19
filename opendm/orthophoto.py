@@ -407,8 +407,8 @@ def merge(input_ortho_and_ortho_cuts, output_orthophoto, orthophoto_vars={}, max
 
                 local_sources = get_sources()
 
+                blocksize = dst_window.width
                 dst_rows, dst_cols = (dst_window.height, dst_window.width)
-                blocksize = dst_rows * dst_cols
                 dst_shape = (dst_count, dst_rows, dst_cols)
 
                 dstarr = np.zeros(dst_shape, dtype=dtype)
