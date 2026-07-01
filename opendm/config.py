@@ -328,7 +328,7 @@ def config(argv=None, parser=None):
                     action=StoreValue,
                     default='incremental',
                     choices=['incremental', 'triangulation', 'planar'],
-                    help=('Choose the structure from motion algorithm. For aerial datasets, if camera GPS positions and angles are available, triangulation can generate better results. For planar scenes captured at fixed altitude with nadir-only images, planar can be much faster. '
+                    help=('Choose the structure from motion algorithm. For aerial datasets, if camera GPS positions and angles are available, triangulation can be faster. Planar is deprecated and will be removed in a future version. '
                         'Can be one of: %(choices)s. Default: '
                         '%(default)s'))
 
@@ -926,6 +926,10 @@ def config(argv=None, parser=None):
     if args.orthophoto_cutline and not args.crop:
       log.WARNING("--orthophoto-cutline is set, but --crop is not. --crop will be set to 0.01")
       args.crop = 0.01
+    
+    if args.sfm_algorithm == 'planar':
+      log.WARNING("--sfm-algorithm planar has been removed. --sfm-algorithm will be set to incremental")
+      args.sfm_algorithm = 'incremental'
 
     if args.sm_cluster:
         try:

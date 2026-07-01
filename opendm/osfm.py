@@ -49,10 +49,10 @@ class OSFMContext:
         else:
             log.WARNING('Found a valid OpenSfM tracks file in: %s' % tracks_file)
 
-    def reconstruct(self, rolling_shutter_correct=False, merge_partial=False, rerun=False):
+    def reconstruct(self, algorithm='incremental', rolling_shutter_correct=False, merge_partial=False, rerun=False):
         reconstruction_file = os.path.join(self.opensfm_project_path, 'reconstruction.json')
         if not io.file_exists(reconstruction_file) or rerun:
-            self.run('reconstruct')
+            self.run(f'reconstruct --algorithm {algorithm}')
             if merge_partial:
                 self.check_merge_partial_reconstructions()
         else:
@@ -76,7 +76,7 @@ class OSFMContext:
 
                 self.match_features(True)
                 self.create_tracks(True)
-                self.reconstruct(rolling_shutter_correct=False, merge_partial=merge_partial, rerun=True)
+                self.reconstruct(algorithm=algorithm, rolling_shutter_correct=False, merge_partial=merge_partial, rerun=True)
 
                 self.touch(rs_file)
             else:
@@ -238,7 +238,7 @@ class OSFMContext:
                 matcher_graph_rounds = 0
                 matcher_neighbors = args.matcher_neighbors
             else:
-                matcher_graph_rounds = 50
+                matcher_graph_rounds = 20
                 matcher_neighbors = 0
             
             # Always use matcher-neighbors if less than 4 pictures
@@ -258,13 +258,12 @@ class OSFMContext:
                 "matching_gps_distance: 0",
                 "matching_graph_rounds: %s" % matcher_graph_rounds,
                 "optimize_camera_parameters: %s" % ('no' if args.use_fixed_camera_params else 'yes'),
-                "reconstruction_algorithm: %s" % (args.sfm_algorithm),
                 "undistorted_image_format: tif",
                 "bundle_outlier_filtering_type: AUTO",
                 "sift_peak_threshold: 0.066",
                 "align_orientation_prior: vertical",
-                "triangulation_type: ROBUST",
-                "retriangulation_ratio: 2",
+                "triangulation_type: FULL",
+                "retriangulation_ratio: 1.2",
             ]
             
             if args.matcher_order > 0:
@@ -333,8 +332,6 @@ class OSFMContext:
                 config.append("bundle_interval: 100")          # Bundle after adding 'bundle_interval' cameras
                 config.append("bundle_new_points_ratio: 1.2")  # Bundle when (new points) / (bundled points) > bundle_new_points_ratio
                 config.append("local_bundle_radius: 1")        # Max image graph distance for images to be included in local bundle adjustment
-            else:
-                config.append("local_bundle_radius: 0")
                 
             if gcp_path:
                 config.append("bundle_use_gcp: yes")

@@ -117,11 +117,11 @@ def opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=False)
     tdpoints = points.copy()
     tdpoints[:,2] = 0
     tree = spatial.cKDTree(tdpoints)
-    
+
     gsds = []
     for shotImage in reconstruction['shots']:
         shot = reconstruction['shots'][shotImage]
-        if use_all_shots or shot.get('gps_dop', 999999) < 999999:
+        if use_all_shots or shot.get('gps_accuracy', [999999])[0] < 999999:
             camera = reconstruction['cameras'][shot['camera']]
             shot_origin = get_origin(shot)
             shot_height = shot_origin[2]
@@ -140,7 +140,6 @@ def opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=False)
                 gsds.append(calculate_gsd_from_focal_ratio(focal_ratio, 
                                                             shot_height - ground_height, 
                                                             camera['width']))
-    
     if len(gsds) > 0:
         mean = np.mean(gsds)
         if mean < 0:
