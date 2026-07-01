@@ -23,7 +23,7 @@ from opensfm import report
 from opendm.multispectral import get_photos_by_band
 from opendm.gpu import has_popsift_and_can_handle_texsize, has_gpu
 from opensfm import multiview, exif
-from opensfm.actions.export_geocoords import _transform
+
 
 class OSFMContext:
     def __init__(self, opensfm_project_path):
@@ -623,9 +623,14 @@ class OSFMContext:
         reference = ds.load_reference()
         projection = pyproj.Proj(proj4)
 
+        def _transform(point):
+            lat, lon, alt = reference.to_lla(point[0], point[1], point[2])
+            easting, northing, altitude = projection(lon, lat, alt)
+            return [easting, northing, altitude]
+
         result = []
         for gcp in gcps_stats:
-            geocoords = _transform(gcp['coordinates'], reference, projection)
+            geocoords = _transform(gcp['coordinates'])
             result.append({
                 'id': gcp['id'],
                 'observations': gcp['observations'],
