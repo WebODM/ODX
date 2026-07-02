@@ -23,7 +23,7 @@ else()
 endif()
 
 ExternalProject_Add(${_proj_name}
-  DEPENDS           ceres opencv gflags
+  DEPENDS           abseil ceres opencv gflags
   PREFIX            ${_SB_BINARY_DIR}
   TMP_DIR           ${_SB_BINARY_DIR}/tmp
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
@@ -43,7 +43,8 @@ ExternalProject_Add(${_proj_name}
     -DOPENSFM_BUILD_TESTS=off
     -DPYTHON_EXECUTABLE=${PYTHON_EXE_PATH}
     -DLASZIP_LIBRARY=${LASZIP_LIB}/laszip
-    -DLASZIP_INCLUDE_DIR=${SB_INSTALL_DIR}/include
+    -DLASZIP_INCLUDE_DIR=${SB_INSTALL_DIR}/include/laszip
+    -Dabsl_DIR=${SB_INSTALL_DIR}/lib/cmake/absl
     ${WIN32_CMAKE_ARGS}
   BUILD_COMMAND ${BUILD_CMD}
   #--Build step-----------------
