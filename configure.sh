@@ -242,7 +242,12 @@ clean() {
         ${RUNPATH}/SuperBuild/download \
         ${RUNPATH}/SuperBuild/src \
         ${RUNPATH}/SuperBuild/install/bin/opensfm/.git \
-        ${RUNPATH}/SuperBuild/install/bin/opensfm/opensfm/src/third_party/pybind11/.git
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/.github \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/annotation_gui_gcp \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/doc \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/viewer \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/data \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/opensfm/src/lib/third_party/pybind11/.git
 
     # find in /code and delete static libraries and intermediate object files
     find ${RUNPATH} -type f -name "*.a" -delete -or -type f -name "*.o" -delete

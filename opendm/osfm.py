@@ -21,7 +21,7 @@ from opensfm.dataset import DataSet
 from opensfm.types import Reconstruction
 from opensfm import report
 from opendm.multispectral import get_photos_by_band
-from opendm.gpu import has_popsift_and_can_handle_texsize, has_gpu
+from opendm.gpu import has_gpu
 from opensfm import multiview, exif
 
 
@@ -262,8 +262,8 @@ class OSFMContext:
                 "bundle_outlier_filtering_type: AUTO",
                 "sift_peak_threshold: 0.066",
                 "align_orientation_prior: vertical",
-                "triangulation_type: FULL",
-                "retriangulation_ratio: 1.2",
+                "triangulation_type: ROBUST",
+                "retriangulation_ratio: 2",
             ]
             
             if args.matcher_order > 0:
@@ -308,13 +308,6 @@ class OSFMContext:
                         w = int((w / h) * feature_process_size)
                         h = int(feature_process_size)
                     
-                    if has_popsift_and_can_handle_texsize(w, h):
-                        log.INFO("Using GPU for extracting SIFT features")
-                        feature_type = "SIFT_GPU"
-                        self.gpu_sift_feature_extraction = True
-                    else:
-                        log.INFO("Using CPU for extracting SIFT features as texture size is too large or GPU SIFT is not available")
-            
             config.append("feature_type: %s" % feature_type)
 
             if has_alt:
@@ -418,20 +411,7 @@ class OSFMContext:
         features_dir = self.path("features")
         
         if not io.dir_exists(features_dir) or rerun:
-            try:
-                self.run('detect_features')
-            except system.SubprocessException as e:
-                # Sometimes feature extraction by GPU can fail
-                # for various reasons, so before giving up
-                # we try to fallback to CPU
-                if hasattr(self, 'gpu_sift_feature_extraction'):
-                    log.WARNING("GPU SIFT extraction failed, maybe the graphics card is not supported? Attempting fallback to CPU")
-                    self.update_config({'feature_type': "SIFT"})
-                    if os.path.exists(features_dir):
-                        shutil.rmtree(features_dir)
-                    self.run('detect_features')
-                else:
-                    raise e
+            self.run('detect_features')
         else:
             log.WARNING('Detect features already done: %s exists' % features_dir)
 

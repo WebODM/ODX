@@ -928,7 +928,7 @@ def config(argv=None, parser=None):
       args.crop = 0.01
     
     if args.sfm_algorithm == 'planar':
-      log.WARNING("--sfm-algorithm planar has been removed. --sfm-algorithm will be set to incremental")
+      log.WARNING("--sfm-algorithm planar is deprecated. --sfm-algorithm will be set to incremental")
       args.sfm_algorithm = 'incremental'
 
     if args.sm_cluster:
