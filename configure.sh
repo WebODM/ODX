@@ -148,6 +148,7 @@ installbuilddeps(){
             libjpeg-dev \
             liblapack-dev \
             libfast-float-dev \
+            libtcmalloc-minimal4t64 \
             libopenjpip7 \
             libpng-dev \
             libproj-dev \
