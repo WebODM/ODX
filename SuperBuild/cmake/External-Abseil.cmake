@@ -14,6 +14,7 @@ ExternalProject_Add(${_proj_name}
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     -DCMAKE_INSTALL_PREFIX=${SB_INSTALL_DIR}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
