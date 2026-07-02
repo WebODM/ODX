@@ -1,9 +1,10 @@
 import glob
 import os
+import math
+import json
 from opendm import log
 from opendm import location
 from pyproj import CRS
-
 
 def fromFile(imgName):
     return imgName.replace("%20", " ")
@@ -191,6 +192,72 @@ class GCPFile:
                 f.write('\n'.join(output) + '\n')
 
             return gcp_file_output
+    
+    def export_opensfm_json(self, output_json, photos):
+        """
+        Creates a new GCP file in OpenSfM JSON format
+        """
+        if os.path.exists(output_json):
+            os.remove(output_json)
+
+        out = {
+          "crs": [self.raw_srs]
+        }
+
+        points = {}
+        idx = 1
+
+        for entry in self.iter_entries():
+            k = f"{entry.x}|{entry.y}|{entry.z}".lower()
+
+            if not k in points:
+                gcp_id = entry.extras
+                if not gcp_id:
+                    gcp_id = f"GCP-{idx}"
+                    idx += 1
+
+                position = {
+                    "easting": entry.x,
+                    "northing": entry.y,
+                }
+                if not math.isnan(entry.z):
+                    position['altitude'] = entry.z
+                
+                points[k] = {
+                    "id": gcp_id.strip(),
+                    "role": "checkpoint" if entry.is_checkpoint() else "gcp",
+                    "position": position,
+                    "observations": []
+                }
+            
+            filename = toFile(entry.filename)
+            w, h = None, None
+
+            for p in photos:
+                if p.filename == filename:
+                    w = p.width
+                    h = p.height
+                    break
+            
+            if w is None or h is None:
+                log.WARNING(f"Cannot find {filename} in image list, it will not be used as ground control point.")
+                continue
+            
+            size = max(w, h)
+            points[k]["observations"].append({
+                "shot_id": filename,
+                "projection": [
+                    (entry.px + 0.5 - w / 2.0) / size,
+                    (entry.py + 0.5 - h / 2.0) / size,
+                ]
+            })
+        
+        out["points"] = list(points.values())
+
+        with open(output_json, 'w') as f:
+            f.write(json.dumps(out, indent=4))
+
+        return output_json
 
 class GCPEntry:
     def __init__(self, x, y, z, px, py, filename, extras=""):

@@ -13,6 +13,7 @@ from opendm import system
 from opendm import context
 from opendm import camera
 from opendm import location
+from opendm.gcp import GCPFile
 from opendm.photo import find_largest_photo_dims, find_largest_photo
 from opensfm.large import metadataset
 from opensfm.large import tools
@@ -126,7 +127,7 @@ class OSFMContext:
 
                 data.save_reconstruction([merged])
 
-    def setup(self, args, images_path, reconstruction, append_config = [], rerun=False):
+    def setup(self, args, images_path, photos, reconstruction, append_config = [], rerun=False):
         """
         Setup a OpenSfM project
         """
@@ -333,7 +334,8 @@ class OSFMContext:
                 else:
                     config.append("bundle_compensate_gps_bias: yes")
                     
-                io.copy(gcp_path, self.path("gcp_list.txt"))
+                gcp = GCPFile(gcp_path)
+                gcp.export_opensfm_json(self.path("ground_control_points.json"), photos)
             
             config = config + append_config
 
