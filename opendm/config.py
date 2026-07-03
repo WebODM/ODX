@@ -548,6 +548,14 @@ def config(argv=None, parser=None):
         help='Simple Morphological Filter window radius parameter (meters). '
                 'Default: %(default)s')
 
+    parser.add_argument('--report-units',
+            metavar='<string>',
+            action=StoreValue,
+            type=str,
+            choices=['m', 'ft', 'US survey foot'],
+            default='m',
+            help='Set the units of the PDF report. By default the vertical units of the coordinate reference system are used. Can be one of: %(choices)s. Default: %(default)s')
+
     parser.add_argument('--texturing-skip-global-seam-leveling',
                         action=StoreTrue,
                         nargs=0,
