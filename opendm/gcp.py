@@ -200,27 +200,34 @@ class GCPFile:
         if os.path.exists(output_json):
             os.remove(output_json)
 
+        transformer = location.transformer(self.srs, CRS.from_epsg(4979))
+
         out = {
-          "crs": [self.raw_srs]
+          "crs": "WGS84"
         }
 
         points = {}
-        idx = 1
 
         for entry in self.iter_entries():
-            k = f"{entry.x}|{entry.y}|{entry.z}".lower()
+            k = (entry.x, entry.y, entry.z)
 
             if not k in points:
                 gcp_id = entry.extras
                 if not gcp_id:
-                    gcp_id = f"GCP-{idx}"
-                    idx += 1
+                    gcp_id = f"GCP-{len(points) + 1}"
+
+                x, y, z = entry.x, entry.y, entry.z
+                has_alt = not math.isnan(z)
+                if not has_alt:
+                    z = 0.0
+                
+                lon, lat, alt = transformer.TransformPoint(x, y, z)
 
                 position = {
-                    "easting": entry.x,
-                    "northing": entry.y,
+                    "latitude": lat,
+                    "longitude": lon,
                 }
-                if not math.isnan(entry.z):
+                if has_alt:
                     position['altitude'] = entry.z
                 
                 points[k] = {
