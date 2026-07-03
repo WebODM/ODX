@@ -143,8 +143,8 @@ option(ODM_BUILD_Ceres "Force to build Ceres library" OFF)
 SETUP_EXTERNAL_PROJECT(Ceres ${ODM_Ceres_Version} ${ODM_BUILD_Ceres})
 
 set(custom_libs Abseil
+                LASzip
                 OpenSfM
-				LASzip
 				PDAL
 				PDALPython
 				Untwine
