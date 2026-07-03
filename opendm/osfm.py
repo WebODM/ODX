@@ -583,38 +583,39 @@ class OSFMContext:
         """
         Load ground control point information.
         """
-        gcp_stats_file = self.path("stats", "ground_control_points.json")
+        gcp_stats_file = self.path("stats", "stats.json")
 
         if not io.file_exists(gcp_stats_file):
             return []
         
-        gcps_stats = {}
+        stats = {}
         try:
             with open(gcp_stats_file) as f:
-                gcps_stats = json.loads(f.read())
+                stats = json.loads(f.read())
         except:
             log.INFO("Cannot parse %s" % gcp_stats_file)
 
-        if not gcps_stats:
+        if not stats:
             return []
         
         ds = DataSet(self.opensfm_project_path)
         reference = ds.load_reference()
-        projection = pyproj.Proj(proj4)
-
+        t = location.transformer(CRS.from_epsg(4979),
+                        CRS.from_proj4(proj4))
+        
         def _transform(point):
             lat, lon, alt = reference.to_lla(point[0], point[1], point[2])
-            easting, northing, altitude = projection(lon, lat, alt)
+            easting, northing, altitude = t.TransformPoint(lon, lat, alt)
             return [easting, northing, altitude]
 
         result = []
-        for gcp in gcps_stats:
+        for gcp in stats.get("gcp_errors", {}).get("details", []):
             geocoords = _transform(gcp['coordinates'])
             result.append({
                 'id': gcp['id'],
                 'observations': gcp['observations'],
                 'coordinates': geocoords,
-                'error': gcp['error']
+                'error': [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']]
             })
 
         return result
