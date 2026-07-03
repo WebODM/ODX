@@ -1,6 +1,5 @@
 import os
 import sys
-import multiprocessing
 
 # Define some needed locations
 current_path = os.path.abspath(os.path.dirname(__file__))
@@ -42,7 +41,7 @@ supported_extensions = {'.jpg','.jpeg','.png', '.tif', '.tiff', '.bmp', '.raw', 
 supported_video_extensions = {'.mp4', '.mov', '.lrv', '.ts'}
 
 # Define the number of cores
-num_cores = multiprocessing.cpu_count()
+num_cores = os.cpu_count()
 
 
 # Print python paths if invoked as a script
