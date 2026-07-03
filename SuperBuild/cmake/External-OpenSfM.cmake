@@ -23,7 +23,7 @@ else()
 endif()
 
 ExternalProject_Add(${_proj_name}
-  DEPENDS           abseil ceres opencv gflags
+  DEPENDS           abseil ceres opencv gflags laszip
   PREFIX            ${_SB_BINARY_DIR}
   TMP_DIR           ${_SB_BINARY_DIR}/tmp
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
