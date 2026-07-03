@@ -244,6 +244,7 @@ clean() {
         ${RUNPATH}/SuperBuild/build \
         ${RUNPATH}/SuperBuild/download \
         ${RUNPATH}/SuperBuild/src \
+        ${RUNPATH}/SuperBuild/install/include/ \
         ${RUNPATH}/SuperBuild/install/bin/opensfm/.git \
         ${RUNPATH}/SuperBuild/install/bin/opensfm/.github \
         ${RUNPATH}/SuperBuild/install/bin/opensfm/annotation_gui_gcp \

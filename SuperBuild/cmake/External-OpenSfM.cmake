@@ -45,12 +45,11 @@ ExternalProject_Add(${_proj_name}
     -DLASZIP_LIBRARY=${LASZIP_LIB}
     -DLASZIP_INCLUDE_DIR=${SB_INSTALL_DIR}/include/laszip
     -Dabsl_DIR=${SB_INSTALL_DIR}/lib/cmake/absl
+    -DCMAKE_INSTALL_PREFIX=${SB_INSTALL_DIR}/bin/${_proj_name}/opensfm
     ${WIN32_CMAKE_ARGS}
   BUILD_COMMAND ${BUILD_CMD}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
-  #--Install step---------------
-  INSTALL_COMMAND    ""
   #--Output logging-------------
   LOG_DOWNLOAD      OFF
   LOG_CONFIGURE     OFF
