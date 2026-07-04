@@ -71,7 +71,7 @@ class OSFMContext:
             rs_file = self.path('rs_done.txt')
 
             if not io.file_exists(rs_file) or rerun:
-                self.run('rs_correct')
+                self.run('correct_rolling_shutter')
 
                 log.INFO("Re-running the reconstruction pipeline")
 
