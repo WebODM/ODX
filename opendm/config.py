@@ -413,7 +413,7 @@ def config(argv=None, parser=None):
                 default=False,
                 help='Skips dense reconstruction and 3D model generation. '
                 'It generates an orthophoto directly from the sparse reconstruction. '
-                'If you just need an orthophoto and do not need a full 3D model, turn on this option. Default: %(default)s')
+                'On flat terrain with no objects/structures, turn this on to save time. Default: %(default)s')
 
     parser.add_argument('--crop',
                     metavar='<positive float>',
