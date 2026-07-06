@@ -6,7 +6,7 @@ from functools import lru_cache
 from opendm import log
 
 def gpu_disabled_by_user_env():
-    return bool(os.environ.get('ODM_NO_GPU'))
+    return bool(os.environ.get('ODM_NO_GPU')) or  bool(os.environ.get('ODX_NO_GPU'))
 
 @lru_cache(maxsize=None)
 def get_cuda_compute_version(device_id = 0):
@@ -46,7 +46,7 @@ def get_cuda_compute_version(device_id = 0):
 
 def has_gpu(args):
     if gpu_disabled_by_user_env():
-        log.INFO("Disabling GPU features (ODM_NO_GPU is set)")
+        log.INFO("Disabling GPU features (ODX_NO_GPU is set)")
         return False
     if args.no_gpu:
         log.INFO("Disabling GPU features (--no-gpu is set)")

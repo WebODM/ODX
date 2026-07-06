@@ -247,9 +247,9 @@ def config(argv=None, parser=None):
     parser.add_argument('--matcher-type',
                         metavar='<string>',
                         action=StoreValue,
-                        default='flann',
-                        choices=['bow', 'bruteforce', 'flann'],
-                        help=('Matcher algorithm, Fast Library for Approximate Nearest Neighbors or Bag of Words. FLANN is slower, but more stable. BOW is faster, but can sometimes miss valid matches. BRUTEFORCE is very slow but robust.'
+                        default='auto',
+                        choices=['auto', 'bow', 'bruteforce', 'flann', 'hamming'],
+                        help=('Matcher algorithm, Fast Library for Approximate Nearest Neighbors or Bag of Words. FLANN is slower, but more stable. BOW is faster, but can sometimes miss valid matches. BRUTEFORCE is very slow but robust. HAMMING is much faster with large datasets but requires a GPU.'
                             'Can be one of: %(choices)s. Default: '
                             '%(default)s'))
 

@@ -283,12 +283,23 @@ class OSFMContext:
             osfm_matchers = {
                 "bow": "WORDS",
                 "flann": "FLANN",
-                "bruteforce": "BRUTEFORCE"
+                "bruteforce": "BRUTEFORCE",
+                "hamming": "GPU_HAMMING"
             }
 
-            if not has_gps and not 'matcher_type_is_set' in args:
-                log.INFO("No GPS information, using BOW matching by default (you can override this by setting --matcher-type explicitly)")
-                matcher_type = "bow"
+            # GPU acceleration?
+            gpu_available = has_gpu(args)
+
+            if matcher_type == "auto":
+                if gpu_available and len(photos) >= 32:
+                    # Actually slower on small datasets due to training loop
+                    log.INFO("Using GPU for image matching")
+                    matcher_type = "hamming"
+                elif not has_gps:
+                    log.INFO("No GPS information, using BOW matching by default (you can override this by setting --matcher-type)")
+                    matcher_type = "bow"
+                else:
+                    matcher_type = "flann"
 
             if matcher_type == "bow":
                 # Cannot use anything other than HAHOG with BOW
@@ -297,19 +308,6 @@ class OSFMContext:
                     feature_type = "HAHOG"
             
             config.append("matcher_type: %s" % osfm_matchers[matcher_type])
-
-            # GPU acceleration?
-            if feature_type == "SIFT":
-                log.INFO("Checking for GPU as using SIFT for extracting features")
-                if has_gpu(args) and max_dims is not None:
-                    w, h = max_dims
-                    if w > h:
-                        h = int((h / w) * feature_process_size)
-                        w = int(feature_process_size)
-                    else:
-                        w = int((w / h) * feature_process_size)
-                        h = int(feature_process_size)
-                    
             config.append("feature_type: %s" % feature_type)
 
             if has_alt:
