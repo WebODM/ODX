@@ -8,7 +8,7 @@ ExternalProject_Add(${_proj_name}
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
   GIT_REPOSITORY    https://github.com/WebODM/FPCFilter
-  GIT_TAG           bbac1be23832a51a5d23a4f896a4ef43b55eb306
+  GIT_TAG           b747662c908cafda3a0ceb7cb723e27f14ba585c
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------
