@@ -201,6 +201,9 @@ class GCPFile:
             os.remove(output_json)
 
         transformer = location.transformer(self.srs, CRS.from_epsg(4979))
+        scale_z = 1.0
+        if len(self.srs.axis_info) == 2:
+            scale_z = self.srs.axis_info[0].unit_conversion_factor
 
         out = {
           "crs": "WGS84"
@@ -222,13 +225,14 @@ class GCPFile:
                     z = 0.0
                 
                 lon, lat, alt = transformer.TransformPoint(x, y, z)
+                alt *= scale_z
 
                 position = {
                     "latitude": lat,
                     "longitude": lon,
                 }
                 if has_alt:
-                    position['altitude'] = entry.z
+                    position['altitude'] = alt
                 
                 points[k] = {
                     "id": gcp_id.strip(),
