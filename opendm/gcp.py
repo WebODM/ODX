@@ -212,7 +212,7 @@ class GCPFile:
         points = {}
 
         for entry in self.iter_entries():
-            k = (entry.x, entry.y, entry.z)
+            k = (entry.x, entry.y, entry.z if not math.isnan(entry.z) else 0.0)
 
             if not k in points:
                 gcp_id = entry.extras

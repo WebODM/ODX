@@ -610,11 +610,12 @@ class OSFMContext:
         result = []
         for gcp in stats.get("gcp_errors", {}).get("details", []):
             geocoords = _transform(gcp['coordinates'])
+            error = [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']] if gcp['error'] is not None else [0, 0, 0]
             result.append({
                 'id': gcp['id'],
                 'observations': gcp['observations'],
                 'coordinates': geocoords,
-                'error': [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']]
+                'error': error
             })
 
         return result
