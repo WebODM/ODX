@@ -607,15 +607,16 @@ class OSFMContext:
             easting, northing, altitude = t.TransformPoint(lon, lat, alt)
             return [easting, northing, altitude]
 
-        result = []
         for gcp in stats.get("gcp_errors", {}).get("details", []):
-            geocoords = _transform(gcp['coordinates'])
-            error = [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']] if gcp['error'] is not None else [0, 0, 0]
+            if gcp['error'] is None:
+                continue
+
+            geocoords = to_geo(gcp['coordinates'])
             result.append({
                 'id': gcp['id'],
                 'observations': gcp['observations'],
                 'coordinates': geocoords,
-                'error': error
+                'error': [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']]
             })
 
         return result
