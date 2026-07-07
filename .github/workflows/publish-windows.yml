@@ -45,6 +45,14 @@ jobs:
       run: |
         rmdir SuperBuild\download /s /q
         rmdir SuperBuild\build /s /q
+        rmdir SuperBuild\install\include /s /q
+        rmdir SuperBuild\install\bin\opensfm\.git /s /q
+        rmdir SuperBuild\install\bin\opensfm\.github /s /q
+        rmdir SuperBuild\install\bin\opensfm\annotation_gui_gcp /s /q
+        rmdir SuperBuild\install\bin\opensfm\doc /s /q
+        rmdir SuperBuild\install\bin\opensfm\viewer /s /q
+        rmdir SuperBuild\install\bin\opensfm\data /s /q
+        rmdir SuperBuild\install\bin\opensfm\opensfm\src\lib\third_party\pybind11\.git /s /q
       shell: cmd
     - name: Create setup
       run: |

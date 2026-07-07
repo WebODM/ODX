@@ -148,7 +148,6 @@ installbuilddeps(){
             libgtk2.0-dev \
             libjpeg-dev \
             liblapack-dev \
-            libfast-float-dev \
             libtcmalloc-minimal4t64 \
             libopenjpip7 \
             libpng-dev \
