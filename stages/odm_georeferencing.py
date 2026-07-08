@@ -121,7 +121,9 @@ class ODMGeoreferencingStage(types.ODM_Stage):
             cmd = f'pdal translate -i "{tree.filtered_point_cloud}" -o \"{tree.odm_georeferencing_model_laz}\"'
             stages = ["ferry"]
             params = [
-                '--filters.ferry.dimensions="views => UserData"'
+                '--filters.ferry.dimensions="views => UserData"',
+                '--writers.las.minor_version=2',
+                '--writers.las.dataformat_id=3',
             ]
 
             if reconstruction.is_georeferenced():
