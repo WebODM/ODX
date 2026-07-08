@@ -602,11 +602,12 @@ class OSFMContext:
         t = location.transformer(CRS.from_epsg(4979),
                         CRS.from_proj4(proj4))
         
-        def _transform(point):
+        def to_geo(point):
             lat, lon, alt = reference.to_lla(point[0], point[1], point[2])
             easting, northing, altitude = t.TransformPoint(lon, lat, alt)
             return [easting, northing, altitude]
 
+        result = []
         for gcp in stats.get("gcp_errors", {}).get("details", []):
             if gcp['error'] is None:
                 log.WARNING(f"{gcp['id']} was not used (observations: {len(gcp['observations'])})")
