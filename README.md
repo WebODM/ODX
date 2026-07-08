@@ -221,6 +221,14 @@ The dev environment makes use of `webodm/nodeodx` by default. You may want to ru
 
 In order to make a clean build, remove `~/.odm-dev-home` and `ODX/.setupdevenv`.
 
+## Code signing policy
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation. 
+
+* Approvers, committers and reviewers: https://github.com/orgs/WebODM/people
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
 ## Credits
 
 ODX makes use of other awesome open source projects to perform its tasks. Among them we'd like to highlight:
