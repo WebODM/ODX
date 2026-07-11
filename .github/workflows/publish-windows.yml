@@ -57,6 +57,7 @@ jobs:
         python configure.py dist
       shell: cmd
     - name: Upload Setup File
+      id: upload-unsigned-artifact
       uses: actions/upload-artifact@v7
       with:
         name: Setup
