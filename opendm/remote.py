@@ -26,11 +26,12 @@ class LocalRemoteExecutor:
     to use the processing power of the current machine as well as offloading tasks to a 
     network node.
     """
-    def __init__(self, nodeUrl, rolling_shutter = False, rerun = False):
+    def __init__(self, nodeUrl, sfm_algorithm = 'incremental', rolling_shutter = False, rerun = False):
         self.node = Node.from_url(nodeUrl)
         self.params = {
             'tasks': [],
             'threads': [],
+            'sfm_algorithm': sfm_algorithm,
             'rolling_shutter': rolling_shutter,
             'rerun': rerun
         }
@@ -446,7 +447,7 @@ class ReconstructionTask(Task):
         log.INFO("==================================")
         octx.feature_matching(self.params['rerun'])
         octx.create_tracks(self.params['rerun'])
-        octx.reconstruct(self.params['rolling_shutter'], True, self.params['rerun'])
+        octx.reconstruct(self.params['sfm_algorithm'], self.params['rolling_shutter'], True, self.params['rerun'])
     
     def process_remote(self, done):
         octx = OSFMContext(self.path("opensfm"))

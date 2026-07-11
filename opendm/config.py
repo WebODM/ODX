@@ -247,9 +247,9 @@ def config(argv=None, parser=None):
     parser.add_argument('--matcher-type',
                         metavar='<string>',
                         action=StoreValue,
-                        default='flann',
-                        choices=['bow', 'bruteforce', 'flann'],
-                        help=('Matcher algorithm, Fast Library for Approximate Nearest Neighbors or Bag of Words. FLANN is slower, but more stable. BOW is faster, but can sometimes miss valid matches. BRUTEFORCE is very slow but robust.'
+                        default='auto',
+                        choices=['auto', 'bow', 'bruteforce', 'flann', 'hamming'],
+                        help=('Matcher algorithm, Fast Library for Approximate Nearest Neighbors or Bag of Words. FLANN is slower, but more stable. BOW is faster, but can sometimes miss valid matches. BRUTEFORCE is very slow but robust. HAMMING is much faster with large datasets but requires a GPU.'
                             'Can be one of: %(choices)s. Default: '
                             '%(default)s'))
 
@@ -328,7 +328,7 @@ def config(argv=None, parser=None):
                     action=StoreValue,
                     default='incremental',
                     choices=['incremental', 'triangulation', 'planar'],
-                    help=('Choose the structure from motion algorithm. For aerial datasets, if camera GPS positions and angles are available, triangulation can generate better results. For planar scenes captured at fixed altitude with nadir-only images, planar can be much faster. '
+                    help=('Choose the structure from motion algorithm. For aerial datasets, if camera GPS positions and angles are available, triangulation can be faster. Planar is deprecated and will be removed in a future version. '
                         'Can be one of: %(choices)s. Default: '
                         '%(default)s'))
 
@@ -547,6 +547,14 @@ def config(argv=None, parser=None):
         default=18.0,
         help='Simple Morphological Filter window radius parameter (meters). '
                 'Default: %(default)s')
+
+    parser.add_argument('--report-units',
+            metavar='<string>',
+            action=StoreValue,
+            type=str,
+            choices=['m', 'ft', 'US survey foot'],
+            default='m',
+            help='Set the units of the PDF report. By default the vertical units of the coordinate reference system are used. Can be one of: %(choices)s. Default: %(default)s')
 
     parser.add_argument('--texturing-skip-global-seam-leveling',
                         action=StoreTrue,
@@ -854,8 +862,9 @@ def config(argv=None, parser=None):
                         default=3,
                         help='Set a value in meters for the GPS Dilution of Precision (DOP) '
                         'information for all images. If your images are tagged '
-                        'with high precision GPS information (RTK), this value can be lowered. '
-                        'Lowering this option can sometimes help control bowling-effects over large areas. Default: %(default)s')
+                        'with high precision GPS information (RTK), this value will be automatically '
+                        'set accordingly. You can use this option to manually set it in case the reconstruction '
+                        'fails. Lowering this option can sometimes help control bowling-effects over large areas. Default: %(default)s')
 
     parser.add_argument('--gps-z-offset',
                         type=float,
@@ -926,6 +935,10 @@ def config(argv=None, parser=None):
     if args.orthophoto_cutline and not args.crop:
       log.WARNING("--orthophoto-cutline is set, but --crop is not. --crop will be set to 0.01")
       args.crop = 0.01
+    
+    if args.sfm_algorithm == 'planar':
+      log.WARNING("--sfm-algorithm planar is deprecated. --sfm-algorithm will be set to incremental")
+      args.sfm_algorithm = 'incremental'
 
     if args.sm_cluster:
         try:

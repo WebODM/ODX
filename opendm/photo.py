@@ -773,13 +773,16 @@ class ODM_Photo:
         return self.get_utc_time()
 
     def get_gps_dop(self):
-        val = -9999
+        xy = -9999
+        z = -9999
         if self.gps_xy_stddev is not None:
-            val = self.gps_xy_stddev
+            xy = z = self.gps_xy_stddev
         if self.gps_z_stddev is not None:
-            val = max(val, self.gps_z_stddev)
-        if val > 0:
-            return val
+            z = self.gps_z_stddev
+        if z < 0:
+            z = xy
+        if xy > 0 and z > 0:
+            return (xy, z)
 
         return None
 
@@ -836,7 +839,13 @@ class ODM_Photo:
             else:
                 gps['altitude'] = 0.0
 
-            gps['dop'] = gps_accuracy
+            dop = self.get_gps_dop()
+            if dop is None:
+                dop = [gps_accuracy, gps_accuracy * 3]
+            
+            gps['latitude_std'] = dop[0]
+            gps['longitude_std'] = dop[0]
+            gps['altitude_std'] = dop[1]
 
         d = {
             "make": self.camera_make,

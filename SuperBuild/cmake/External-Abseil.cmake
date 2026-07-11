@@ -1,21 +1,23 @@
-set(_proj_name fpcfilter)
+set(_proj_name abseil)
 set(_SB_BINARY_DIR "${SB_BINARY_DIR}/${_proj_name}")
 
 ExternalProject_Add(${_proj_name}
+  DEPENDS
   PREFIX            ${_SB_BINARY_DIR}
   TMP_DIR           ${_SB_BINARY_DIR}/tmp
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
   #--Download step--------------
-  DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
-  GIT_REPOSITORY    https://github.com/WebODM/FPCFilter
-  GIT_TAG           b747662c908cafda3a0ceb7cb723e27f14ba585c
+  DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}/${_proj_name}
+  URL               https://github.com/abseil/abseil-cpp/archive/refs/heads/lts_2026_01_07.zip
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS
-	-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DCMAKE_CXX_STANDARD=17
+    -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    -DCMAKE_INSTALL_PREFIX=${SB_INSTALL_DIR}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
   #--Install step---------------

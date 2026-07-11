@@ -7,25 +7,30 @@ set(EXTRA_INCLUDE_DIRS "")
 if(WIN32)
   set(OpenCV_DIR "${SB_INSTALL_DIR}/x64/vc17/lib")
   set(BUILD_CMD ${CMAKE_COMMAND} --build "${SB_BUILD_DIR}/opensfm" --config "${CMAKE_BUILD_TYPE}")
+  set(LASZIP_LIB "${SB_INSTALL_DIR}/lib/laszip.lib")
+
 else()
   set(BUILD_CMD make "-j${nproc}")
   if (APPLE)
     set(OpenCV_DIR "${SB_INSTALL_DIR}")
     set(EXTRA_INCLUDE_DIRS "${HOMEBREW_INSTALL_PREFIX}/include")
+    set(LASZIP_LIB "${SB_INSTALL_DIR}/lib/liblaszip.dylib")
+
   else()
     set(OpenCV_DIR "${SB_INSTALL_DIR}/lib/cmake/opencv4")
+    set(LASZIP_LIB "${SB_INSTALL_DIR}/lib/liblaszip.so")
   endif()
 endif()
 
 ExternalProject_Add(${_proj_name}
-  DEPENDS           ceres opencv gflags
+  DEPENDS           abseil ceres opencv gflags laszip
   PREFIX            ${_SB_BINARY_DIR}
   TMP_DIR           ${_SB_BINARY_DIR}/tmp
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
   GIT_REPOSITORY    https://github.com/WebODM/OpenSfM/
-  GIT_TAG           91f58841370b0c28bc1248d038b1930fa11d0637
+  GIT_TAG           bf7f84a9109098971f7a15ed9b0348b98e093ed7
   #--Update/Patch step----------
   UPDATE_COMMAND    git submodule update --init --recursive
   #--Configure step-------------
@@ -37,12 +42,14 @@ ExternalProject_Add(${_proj_name}
     -DYET_ADDITIONAL_INCLUDE_DIRS=${EXTRA_INCLUDE_DIRS}
     -DOPENSFM_BUILD_TESTS=off
     -DPYTHON_EXECUTABLE=${PYTHON_EXE_PATH}
+    -DLASZIP_LIBRARY=${LASZIP_LIB}
+    -DLASZIP_INCLUDE_DIR=${SB_INSTALL_DIR}/include/laszip
+    -Dabsl_DIR=${SB_INSTALL_DIR}/lib/cmake/absl
+    -DCMAKE_INSTALL_PREFIX=${SB_INSTALL_DIR}/bin/${_proj_name}/opensfm
     ${WIN32_CMAKE_ARGS}
   BUILD_COMMAND ${BUILD_CMD}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
-  #--Install step---------------
-  INSTALL_COMMAND    ""
   #--Output logging-------------
   LOG_DOWNLOAD      OFF
   LOG_CONFIGURE     OFF

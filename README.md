@@ -2,7 +2,7 @@
 
 ![CPU Build](https://img.shields.io/github/actions/workflow/status/WebODM/ODX/publish-docker.yml?branch=master&label=docker%20CPU) ![GPU Build](https://img.shields.io/github/actions/workflow/status/WebODM/ODX/publish-docker-gpu.yml?branch=master&label=docker%20GPU) ![Windows Build](https://img.shields.io/github/actions/workflow/status/WebODM/ODX/publish-windows.yml?branch=master&label=windows) ![Version](https://img.shields.io/github/v/release/WebODM/ODX) ![License](https://img.shields.io/github/license/WebODM/ODX) ![Contributors](https://img.shields.io/github/contributors/WebODM/ODX) ![Updated](https://img.shields.io/github/last-commit/WebODM/ODX)
 
-> **📢 Now with NVIDIA GeForce RTX 50 Series support, checkpoints support and tons of improvements!** [Read the announcement](https://webodm.org/blog/announcement/)
+> **📢 Now faster than ODM, with OpenSfM 1.0 support, GPU based feature matching, NVIDIA GeForce RTX 50 Series support, checkpoints support and tons of improvements!** [Read the announcement](https://webodm.org/blog/announcement/)
 
 A free and open source photogrammetry engine for processing aerial and ground imagery. ODX turns images into:
 
@@ -220,6 +220,14 @@ The dev environment makes use of `webodm/nodeodx` by default. You may want to ru
 `docker pull webodm/nodeodx` before running `./start-dev-env.sh` to avoid using an old cached version.
 
 In order to make a clean build, remove `~/.odm-dev-home` and `ODX/.setupdevenv`.
+
+## Code signing policy
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation. 
+
+* Approvers, committers and reviewers: https://github.com/orgs/WebODM/people
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
 
 ## Credits
 

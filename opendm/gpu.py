@@ -6,21 +6,7 @@ from functools import lru_cache
 from opendm import log
 
 def gpu_disabled_by_user_env():
-    return bool(os.environ.get('ODM_NO_GPU'))
-
-@lru_cache(maxsize=None)
-def has_popsift_and_can_handle_texsize(width, height):
-    # We first check that we have the required compute capabilities
-    # As we do not support compute capabilities less than 3.5
-    try:
-        compute_major, compute_minor = get_cuda_compute_version(0)
-        if compute_major < 3 or (compute_major == 3 and compute_minor < 5):
-            # Not supported
-            log.INFO("CUDA compute platform is not supported (detected: %s.%s but we need at least 3.5)" % (compute_major, compute_minor))
-            return False
-    except Exception as e:
-        log.WARNING(str(e))
-        return False
+    return bool(os.environ.get('ODM_NO_GPU')) or  bool(os.environ.get('ODX_NO_GPU'))
 
 @lru_cache(maxsize=None)
 def get_cuda_compute_version(device_id = 0):
@@ -60,7 +46,7 @@ def get_cuda_compute_version(device_id = 0):
 
 def has_gpu(args):
     if gpu_disabled_by_user_env():
-        log.INFO("Disabling GPU features (ODM_NO_GPU is set)")
+        log.INFO("Disabling GPU features (ODX_NO_GPU is set)")
         return False
     if args.no_gpu:
         log.INFO("Disabling GPU features (--no-gpu is set)")

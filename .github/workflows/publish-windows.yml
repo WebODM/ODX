@@ -14,6 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
@@ -45,22 +46,40 @@ jobs:
       run: |
         rmdir SuperBuild\download /s /q
         rmdir SuperBuild\build /s /q
+        rmdir SuperBuild\install\include /s /q
+        rmdir SuperBuild\install\bin\opensfm\.git /s /q
+        rmdir SuperBuild\install\bin\opensfm\.github /s /q
+        rmdir SuperBuild\install\bin\opensfm\annotation_gui_gcp /s /q
+        rmdir SuperBuild\install\bin\opensfm\doc /s /q
+        rmdir SuperBuild\install\bin\opensfm\viewer /s /q
+        rmdir SuperBuild\install\bin\opensfm\data /s /q
+        rmdir SuperBuild\install\bin\opensfm\opensfm\src\lib\third_party\pybind11\.git /s /q
       shell: cmd
     - name: Create setup
       run: |
         python configure.py dist
       shell: cmd
     - name: Upload Setup File
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Setup
         path: dist\*.exe
+    - name: Code Signing Request
+      uses: signpath/github-action-submit-signing-request@v2
+      with:
+        api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+        organization-id: 'c36aaa28-05f1-40aa-b65d-122efb3f4699'
+        project-slug: 'ODX'
+        signing-policy-slug: 'test-signing'
+        github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
+        wait-for-completion: true
+        output-artifact-directory: 'dist/signed'
     - name: Upload Setup to Release
       uses: svenstaro/upload-release-action@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: dist/*.exe
+        file: dist/signed/*.exe
         file_glob: true
         tag: ${{ github.ref }}
         overwrite: true

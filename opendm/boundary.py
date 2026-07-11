@@ -20,7 +20,7 @@ def compute_boundary_from_shots(reconstruction_json, buffer=0, reconstruction_of
 
     for shot_image in reconstruction['shots']:
         shot = reconstruction['shots'][shot_image]
-        if shot.get('gps_dop', 999999) < 999999:
+        if shot.get('gps_accuracy', [999999])[0] < 999999:
             camera = reconstruction['cameras'][shot['camera']]
 
             p = ogr.Geometry(ogr.wkbPoint)

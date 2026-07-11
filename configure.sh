@@ -90,6 +90,7 @@ installruntimedeps() {
             libjpeg-turbo8 \
             libopenjpip7 \
             liblapack3 \
+            libtcmalloc-minimal4t64 \
             libpng16-16 \
             libproj25 \
             libswscale7 \
@@ -147,6 +148,7 @@ installbuilddeps(){
             libgtk2.0-dev \
             libjpeg-dev \
             liblapack-dev \
+            libtcmalloc-minimal4t64 \
             libopenjpip7 \
             libpng-dev \
             libproj-dev \
@@ -241,8 +243,14 @@ clean() {
         ${RUNPATH}/SuperBuild/build \
         ${RUNPATH}/SuperBuild/download \
         ${RUNPATH}/SuperBuild/src \
+        ${RUNPATH}/SuperBuild/install/include/ \
         ${RUNPATH}/SuperBuild/install/bin/opensfm/.git \
-        ${RUNPATH}/SuperBuild/install/bin/opensfm/opensfm/src/third_party/pybind11/.git
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/.github \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/annotation_gui_gcp \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/doc \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/viewer \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/data \
+        ${RUNPATH}/SuperBuild/install/bin/opensfm/opensfm/src/lib/third_party/pybind11/.git
 
     # find in /code and delete static libraries and intermediate object files
     find ${RUNPATH} -type f -name "*.a" -delete -or -type f -name "*.o" -delete

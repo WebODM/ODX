@@ -13,6 +13,7 @@ from opendm import system
 from opendm import context
 from opendm import camera
 from opendm import location
+from opendm.gcp import GCPFile
 from opendm.photo import find_largest_photo_dims, find_largest_photo
 from opensfm.large import metadataset
 from opensfm.large import tools
@@ -21,9 +22,9 @@ from opensfm.dataset import DataSet
 from opensfm.types import Reconstruction
 from opensfm import report
 from opendm.multispectral import get_photos_by_band
-from opendm.gpu import has_popsift_and_can_handle_texsize, has_gpu
+from opendm.gpu import has_gpu
 from opensfm import multiview, exif
-from opensfm.actions.export_geocoords import _transform
+
 
 class OSFMContext:
     def __init__(self, opensfm_project_path):
@@ -49,10 +50,10 @@ class OSFMContext:
         else:
             log.WARNING('Found a valid OpenSfM tracks file in: %s' % tracks_file)
 
-    def reconstruct(self, rolling_shutter_correct=False, merge_partial=False, rerun=False):
+    def reconstruct(self, algorithm='incremental', rolling_shutter_correct=False, merge_partial=False, rerun=False):
         reconstruction_file = os.path.join(self.opensfm_project_path, 'reconstruction.json')
         if not io.file_exists(reconstruction_file) or rerun:
-            self.run('reconstruct')
+            self.run(f'reconstruct --algorithm {algorithm}')
             if merge_partial:
                 self.check_merge_partial_reconstructions()
         else:
@@ -70,13 +71,13 @@ class OSFMContext:
             rs_file = self.path('rs_done.txt')
 
             if not io.file_exists(rs_file) or rerun:
-                self.run('rs_correct')
+                self.run('correct_rolling_shutter')
 
                 log.INFO("Re-running the reconstruction pipeline")
 
                 self.match_features(True)
                 self.create_tracks(True)
-                self.reconstruct(rolling_shutter_correct=False, merge_partial=merge_partial, rerun=True)
+                self.reconstruct(algorithm=algorithm, rolling_shutter_correct=False, merge_partial=merge_partial, rerun=True)
 
                 self.touch(rs_file)
             else:
@@ -126,7 +127,7 @@ class OSFMContext:
 
                 data.save_reconstruction([merged])
 
-    def setup(self, args, images_path, reconstruction, append_config = [], rerun=False):
+    def setup(self, args, images_path, photos, reconstruction, append_config = [], rerun=False):
         """
         Setup a OpenSfM project
         """
@@ -238,7 +239,7 @@ class OSFMContext:
                 matcher_graph_rounds = 0
                 matcher_neighbors = args.matcher_neighbors
             else:
-                matcher_graph_rounds = 50
+                matcher_graph_rounds = 20
                 matcher_neighbors = 0
             
             # Always use matcher-neighbors if less than 4 pictures
@@ -249,6 +250,7 @@ class OSFMContext:
             config = [
                 "report_name: ODX",
                 "report_version: %s" % log.get_version(),
+                "report_unit_system: %s" % args.report_units,
                 "use_exif_size: no",
                 "flann_algorithm: KDTREE", # more stable, faster than KMEANS
                 "feature_process_size: %s" % feature_process_size,
@@ -258,7 +260,6 @@ class OSFMContext:
                 "matching_gps_distance: 0",
                 "matching_graph_rounds: %s" % matcher_graph_rounds,
                 "optimize_camera_parameters: %s" % ('no' if args.use_fixed_camera_params else 'yes'),
-                "reconstruction_algorithm: %s" % (args.sfm_algorithm),
                 "undistorted_image_format: tif",
                 "bundle_outlier_filtering_type: AUTO",
                 "sift_peak_threshold: 0.066",
@@ -282,12 +283,23 @@ class OSFMContext:
             osfm_matchers = {
                 "bow": "WORDS",
                 "flann": "FLANN",
-                "bruteforce": "BRUTEFORCE"
+                "bruteforce": "BRUTEFORCE",
+                "hamming": "GPU_HAMMING"
             }
 
-            if not has_gps and not 'matcher_type_is_set' in args:
-                log.INFO("No GPS information, using BOW matching by default (you can override this by setting --matcher-type explicitly)")
-                matcher_type = "bow"
+            # GPU acceleration?
+            gpu_available = has_gpu(args)
+
+            if matcher_type == "auto":
+                if gpu_available and len(photos) >= 32:
+                    # Actually slower on small datasets due to training loop
+                    log.INFO("Using GPU for image matching")
+                    matcher_type = "hamming"
+                elif not has_gps:
+                    log.INFO("No GPS information, using BOW matching by default (you can override this by setting --matcher-type)")
+                    matcher_type = "bow"
+                else:
+                    matcher_type = "flann"
 
             if matcher_type == "bow":
                 # Cannot use anything other than HAHOG with BOW
@@ -296,26 +308,6 @@ class OSFMContext:
                     feature_type = "HAHOG"
             
             config.append("matcher_type: %s" % osfm_matchers[matcher_type])
-
-            # GPU acceleration?
-            if feature_type == "SIFT":
-                log.INFO("Checking for GPU as using SIFT for extracting features")
-                if has_gpu(args) and max_dims is not None:
-                    w, h = max_dims
-                    if w > h:
-                        h = int((h / w) * feature_process_size)
-                        w = int(feature_process_size)
-                    else:
-                        w = int((w / h) * feature_process_size)
-                        h = int(feature_process_size)
-                    
-                    if has_popsift_and_can_handle_texsize(w, h):
-                        log.INFO("Using GPU for extracting SIFT features")
-                        feature_type = "SIFT_GPU"
-                        self.gpu_sift_feature_extraction = True
-                    else:
-                        log.INFO("Using CPU for extracting SIFT features as texture size is too large or GPU SIFT is not available")
-            
             config.append("feature_type: %s" % feature_type)
 
             if has_alt:
@@ -333,8 +325,6 @@ class OSFMContext:
                 config.append("bundle_interval: 100")          # Bundle after adding 'bundle_interval' cameras
                 config.append("bundle_new_points_ratio: 1.2")  # Bundle when (new points) / (bundled points) > bundle_new_points_ratio
                 config.append("local_bundle_radius: 1")        # Max image graph distance for images to be included in local bundle adjustment
-            else:
-                config.append("local_bundle_radius: 0")
                 
             if gcp_path:
                 config.append("bundle_use_gcp: yes")
@@ -343,7 +333,8 @@ class OSFMContext:
                 else:
                     config.append("bundle_compensate_gps_bias: yes")
                     
-                io.copy(gcp_path, self.path("gcp_list.txt"))
+                gcp = GCPFile(gcp_path)
+                gcp.export_opensfm_json(self.path("ground_control_points.json"), photos)
             
             config = config + append_config
 
@@ -421,20 +412,7 @@ class OSFMContext:
         features_dir = self.path("features")
         
         if not io.dir_exists(features_dir) or rerun:
-            try:
-                self.run('detect_features')
-            except system.SubprocessException as e:
-                # Sometimes feature extraction by GPU can fail
-                # for various reasons, so before giving up
-                # we try to fallback to CPU
-                if hasattr(self, 'gpu_sift_feature_extraction'):
-                    log.WARNING("GPU SIFT extraction failed, maybe the graphics card is not supported? Attempting fallback to CPU")
-                    self.update_config({'feature_type': "SIFT"})
-                    if os.path.exists(features_dir):
-                        shutil.rmtree(features_dir)
-                    self.run('detect_features')
-                else:
-                    raise e
+            self.run('detect_features')
         else:
             log.WARNING('Detect features already done: %s exists' % features_dir)
 
@@ -604,33 +582,43 @@ class OSFMContext:
         """
         Load ground control point information.
         """
-        gcp_stats_file = self.path("stats", "ground_control_points.json")
+        gcp_stats_file = self.path("stats", "stats.json")
 
         if not io.file_exists(gcp_stats_file):
             return []
         
-        gcps_stats = {}
+        stats = {}
         try:
             with open(gcp_stats_file) as f:
-                gcps_stats = json.loads(f.read())
+                stats = json.loads(f.read())
         except:
             log.INFO("Cannot parse %s" % gcp_stats_file)
 
-        if not gcps_stats:
+        if not stats:
             return []
         
         ds = DataSet(self.opensfm_project_path)
         reference = ds.load_reference()
-        projection = pyproj.Proj(proj4)
+        t = location.transformer(CRS.from_epsg(4979),
+                        CRS.from_proj4(proj4))
+        
+        def to_geo(point):
+            lat, lon, alt = reference.to_lla(point[0], point[1], point[2])
+            easting, northing, altitude = t.TransformPoint(lon, lat, alt)
+            return [easting, northing, altitude]
 
         result = []
-        for gcp in gcps_stats:
-            geocoords = _transform(gcp['coordinates'], reference, projection)
+        for gcp in stats.get("gcp_errors", {}).get("details", []):
+            if gcp['error'] is None:
+                log.WARNING(f"{gcp['id']} was not used (observations: {len(gcp['observations'])})")
+                continue
+
+            geocoords = to_geo(gcp['coordinates'])
             result.append({
                 'id': gcp['id'],
                 'observations': gcp['observations'],
                 'coordinates': geocoords,
-                'error': gcp['error']
+                'error': [gcp['error']['x'], gcp['error']['y'], gcp['error']['z']]
             })
 
         return result
