@@ -113,6 +113,7 @@ class ODM_Photo:
         self.latitude = None
         self.longitude = None
         self.altitude = None
+        self.relative_altitude = None
 
         # Multi-band fields
         self.band_name = 'RGB'
@@ -389,6 +390,9 @@ class ODM_Photo:
                     ], float)
                     self.set_attr_from_xmp_tag('altitude', xtags, [
                         '@drone-dji:AbsoluteAltitude'
+                    ], float)
+                    self.set_attr_from_xmp_tag('relative_altitude', xtags, [
+                        '@drone-dji:RelativeAltitude'
                     ], float)
 
                     # Phantom 4 RTK
@@ -866,6 +870,9 @@ class ODM_Photo:
                 'phi': self.phi,
                 'kappa': self.kappa
             }
+        
+        if self.relative_altitude is not None:
+            d['relative_altitude'] = self.relative_altitude
         
         # Speed is not useful without GPS
         if self.has_speed() and has_gps:
