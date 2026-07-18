@@ -22,6 +22,6 @@ Every issue needs to follow the format specified below. Do not remove the questi
 
 [Type answer here]
 
-### How can we reproduce this? (What steps trigger the problem? What parameters are you using for processing? Include screenshots. If you are having issues processing a dataset, you must include a copy of your dataset uploaded on Dropbox, Google Drive or https://dronedb.app)
+### How can we reproduce this? (What steps trigger the problem? What parameters are you using for processing? Does it process with the default settings? Include screenshots. If you are having issues processing a dataset, you must include a copy of your dataset uploaded on Dropbox, Google Drive or https://dronedb.app)
 
 [Type answer here]
