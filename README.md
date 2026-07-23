@@ -223,7 +223,7 @@ In order to make a clean build, remove `~/.odm-dev-home` and `ODX/.setupdevenv`.
 
 ## Code signing policy
 
-Free code signing provided by SignPath.io, certificate by SignPath Foundation. 
+Free code signing on Windows provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org/).
 
 * Approvers, committers and reviewers: https://github.com/orgs/WebODM/people
 
