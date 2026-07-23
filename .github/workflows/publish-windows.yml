@@ -65,7 +65,7 @@ jobs:
     - name: Code Signing Request
       uses: signpath/github-action-submit-signing-request@v2
       with:
-        api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
         organization-id: 'c36aaa28-05f1-40aa-b65d-122efb3f4699'
         project-slug: 'ODX'
         signing-policy-slug: 'release-signing'
