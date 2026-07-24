@@ -61,6 +61,7 @@ def dn_to_temperature(photo, image, images_path):
             image = image.astype("float32")
             image *= 0.01
             image -= 273.15
+            return image
         else:
             try:
                 params, image = extract_raw_thermal_image_data(os.path.join(images_path, photo.filename))
