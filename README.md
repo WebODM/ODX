@@ -4,6 +4,8 @@
 
 > **📢 Now faster than ODM, with OpenSfM 1.0 support, GPU based feature matching, NVIDIA GeForce RTX 50 Series support, checkpoints support and tons of improvements!** [Read the announcement](https://webodm.org/blog/announcement/)
 
+> **If you like ODX, take a second to ⭐ the project? Thank you! 🙏**
+
 A free and open source photogrammetry engine for processing aerial and ground imagery. ODX turns images into:
 
 * Classified Point Clouds
