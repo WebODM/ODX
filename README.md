@@ -235,7 +235,7 @@ This program will not transfer any information to other networked systems unless
 
 ODX makes use of other awesome open source projects to perform its tasks. Among them we'd like to highlight:
 
- - [OpenSfM](https://github.com/WebODM/OpenSfM)
+ - [OpenSfM](https://github.com/OpenSfM/OpenSfM)
  - [OpenMVS](https://github.com/cdcseacave/openMVS/)
  - [PDAL](https://github.com/PDAL/PDAL)
  - [Entwine](https://entwine.io/)
