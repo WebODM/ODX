@@ -30,7 +30,7 @@ ExternalProject_Add(${_proj_name}
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
   GIT_REPOSITORY    https://github.com/WebODM/OpenSfM/
-  GIT_TAG           71dc9f557e6adc2e0ed10d018221a4168d826eec
+  GIT_TAG           029bf05373658e5123414a20dc1d86bb4e5bfb0d
   #--Update/Patch step----------
   UPDATE_COMMAND    git submodule update --init --recursive
   #--Configure step-------------
