@@ -906,6 +906,7 @@ def config(argv=None, parser=None):
             log.WARNING("%s is no longer a valid argument and will be ignored!" % p)
             if p == "--build-overviews" and not args.cog:
                 log.WARNING("Turning on --cog to build overviews")
+                args.cog = True
 
 
     # check that the project path setting has been set properly
