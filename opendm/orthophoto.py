@@ -30,18 +30,6 @@ def get_orthophoto_vars(args):
         'NUM_THREADS': args.max_concurrency
     }
 
-def build_overviews(orthophoto_file):
-    log.INFO("Building Overviews")
-    kwargs = {'orthophoto': orthophoto_file}
-    
-    # Run gdaladdo
-    system.run('gdaladdo -r average '
-                '--config BIGTIFF_OVERVIEW IF_SAFER '
-                '--config COMPRESS_OVERVIEW JPEG '
-                '--config INTERLEAVE_OVERVIEW PIXEL '
-                '--config PHOTOMETRIC_OVERVIEW YCBCR'
-                '{orthophoto} 2 4 8 16'.format(**kwargs))
-
 def generate_png(orthophoto_file, output_file=None, outsize=None):
     if output_file is None:
         base, ext = os.path.splitext(orthophoto_file)
@@ -173,9 +161,6 @@ def generate_tfw(orthophoto_file):
 def post_orthophoto_steps(args, bounds_file_path, orthophoto_file, orthophoto_tiles_dir, resolution, reconstruction, tree, embed_gcp_meta=False):
     if args.crop > 0 or args.boundary:
         Cropper.crop(bounds_file_path, orthophoto_file, get_orthophoto_vars(args), keep_original=not args.optimize_disk_space, warp_options=['-dstalpha'])
-
-    if args.build_overviews and not args.cog:
-        build_overviews(orthophoto_file)
 
     if args.orthophoto_png:
         generate_png(orthophoto_file)

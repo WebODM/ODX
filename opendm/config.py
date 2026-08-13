@@ -21,7 +21,6 @@ rerun_stages = {
     'auto_boundary_distance': 'odm_filterpoints',
     'bg_removal': 'dataset',
     'boundary': 'odm_filterpoints',
-    'build_overviews': 'odm_orthophoto',
     'camera_lens': 'dataset',
     'cameras': 'dataset',
     'cog': 'odm_dem',
@@ -753,12 +752,6 @@ def config(argv=None, parser=None):
                     'Note that not all cameras are present in the database. Set to 0 to use the database value. '
                     'Default: %(default)s')
 
-    parser.add_argument('--build-overviews',
-                        action=StoreTrue,
-                        nargs=0,
-                        default=False,
-                        help='Build orthophoto overviews for faster display in programs such as QGIS. Default: %(default)s')
-
     parser.add_argument('--cog',
                         action=StoreTrue,
                         nargs=0,
@@ -903,7 +896,7 @@ def config(argv=None, parser=None):
                           'Default: %(default)s'))
 
     args, unknown = parser.parse_known_args(argv)
-    DEPRECATED = ["--verbose", "--debug", "--time", "--resize-to", "--depthmap-resolution", "--pc-geometric", "--texturing-data-term", "--texturing-outlier-removal-type", "--texturing-tone-mapping", "--texturing-skip-local-seam-leveling"]
+    DEPRECATED = ["--verbose", "--debug", "--time", "--resize-to", "--depthmap-resolution", "--pc-geometric", "--texturing-data-term", "--texturing-outlier-removal-type", "--texturing-tone-mapping", "--texturing-skip-local-seam-leveling", "--build-overviews"]
     unknown_e = [p for p in unknown if p not in DEPRECATED]
     if len(unknown_e) > 0:
         raise parser.error("unrecognized arguments: %s" % " ".join(unknown_e))
@@ -911,6 +904,10 @@ def config(argv=None, parser=None):
     for p in unknown:
         if p in DEPRECATED:
             log.WARNING("%s is no longer a valid argument and will be ignored!" % p)
+            if p == "--build-overviews" and not args.cog:
+                log.WARNING("Turning on --cog to build overviews")
+                args.cog = True
+
 
     # check that the project path setting has been set properly
     if not args.project_path:
