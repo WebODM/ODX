@@ -340,7 +340,8 @@ class ODM_Photo:
                     ])
                     
                     self.set_attr_from_xmp_tag('horizontal_irradiance', xtags, [
-                        'Camera:HorizontalIrradiance'
+                        'Camera:HorizontalIrradiance',
+                        'DLS:HorizontalIrradiance',
                     ], float)
 
                     self.set_attr_from_xmp_tag('irradiance_scale_to_si', xtags, [
@@ -733,6 +734,8 @@ class ODM_Photo:
             scale = 1.0 # Assumed
             if self.irradiance_scale_to_si is not None:
                 scale = self.irradiance_scale_to_si
+            elif self.camera_make == "MicaSense" and self.camera_model == "RedEdge-P":
+                scale = 0.01
             
             return self.horizontal_irradiance * scale
         elif self.camera_make == "DJI" and self.spectral_irradiance is not None:
