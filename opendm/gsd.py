@@ -7,22 +7,6 @@ from opendm import log
 from opendm.shots import get_origin
 from scipy import spatial
 
-def rounded_gsd(reconstruction_json, default_value=None, ndigits=0, ignore_gsd=False):
-    """
-    :param reconstruction_json path to OpenSfM's reconstruction.json
-    :return GSD value rounded. If GSD cannot be computed, or ignore_gsd is set, it returns a default value.
-    """
-    if ignore_gsd:
-        return default_value
-
-    gsd = opensfm_reconstruction_average_gsd(reconstruction_json)
-
-    if gsd is not None:
-        return round(gsd, ndigits)
-    else:
-        return default_value
-
-
 def image_max_size(photos, target_resolution, reconstruction_json, gsd_error_estimate = 0.5, ignore_gsd=False, has_gcp=False):
     """
     :param photos images database
@@ -54,7 +38,7 @@ def image_scale_factor(target_resolution, reconstruction_json, gsd_error_estimat
     :return A down-scale (<= 1) value to apply to images to achieve the target resolution by comparing the current GSD of the reconstruction.
         If a GSD cannot be computed, it just returns 1. Returned scale values are never higher than 1 and are always obtained by dividing by 2 (e.g. 0.5, 0.25, etc.)
     """
-    gsd = opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=has_gcp)
+    gsd = opensfm_reconstruction_percentile_gsd(reconstruction_json, use_all_shots=has_gcp)
 
     if gsd is not None and target_resolution > 0:
         gsd = gsd * (1 + gsd_error_estimate)
@@ -82,7 +66,7 @@ def cap_resolution(resolution, reconstruction_json, gsd_error_estimate = 0.1, gs
     if ignore_gsd:
         return resolution
 
-    gsd = opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=has_gcp or ignore_resolution)
+    gsd = opensfm_reconstruction_percentile_gsd(reconstruction_json, use_all_shots=has_gcp or ignore_resolution)
 
     if gsd is not None:
         gsd = gsd * (1 - gsd_error_estimate) * gsd_scaling
@@ -97,9 +81,30 @@ def cap_resolution(resolution, reconstruction_json, gsd_error_estimate = 0.1, gs
         log.WARNING('Cannot calculate GSD, using requested resolution of {:.2f}'.format(resolution))
         return resolution
 
+@lru_cache(maxsize=None)
+def opensfm_reconstruction_percentile_gsd(reconstruction_json, use_all_shots=False, percentile=10):
+    gsds = opensfm_reconstruction_gsds(reconstruction_json, use_all_shots=use_all_shots)
+    if len(gsds) > 0:
+        g = np.array(gsds)
+        if np.any(g<0):
+            log.WARNING("Negative GSDs detected, this might indicate a flipped Z-axis.")
+        return float(np.percentile(np.abs(g), percentile))
+    
+    return None
 
 @lru_cache(maxsize=None)
 def opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=False):
+    gsds = opensfm_reconstruction_gsds(reconstruction_json, use_all_shots=use_all_shots)
+    if len(gsds) > 0:
+        mean = np.mean(gsds)
+        if mean < 0:
+            log.WARNING("Negative GSD estimated, this might indicate a flipped Z-axis.")
+        return abs(mean)
+    
+    return None
+
+@lru_cache(maxsize=None)
+def opensfm_reconstruction_gsds(reconstruction_json, use_all_shots=False):
     """
     Computes the average Ground Sampling Distance of an OpenSfM reconstruction.
     :param reconstruction_json path to OpenSfM's reconstruction.json
@@ -140,13 +145,7 @@ def opensfm_reconstruction_average_gsd(reconstruction_json, use_all_shots=False)
                 gsds.append(calculate_gsd_from_focal_ratio(focal_ratio, 
                                                             shot_height - ground_height, 
                                                             camera['width']))
-    if len(gsds) > 0:
-        mean = np.mean(gsds)
-        if mean < 0:
-            log.WARNING("Negative GSD estimated, this might indicate a flipped Z-axis.")
-        return abs(mean)
-    
-    return None
+    return gsds
 
 def calculate_gsd(sensor_width, flight_height, focal_length, image_width):
     """
