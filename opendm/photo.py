@@ -734,7 +734,15 @@ class ODM_Photo:
             scale = 1.0 # Assumed
             if self.irradiance_scale_to_si is not None:
                 scale = self.irradiance_scale_to_si
-            elif self.camera_make == "MicaSense" and self.camera_model == "RedEdge-P":
+            elif (
+                self.camera_make == "MicaSense"
+                and (
+                    self.camera_model == "RedEdge-P"
+                    or self.camera_model == "RedEdge-M"
+                    or self.camera_model == "Altum"
+                    or self.camera_model == "Altum-PT"
+                )
+            ):
                 scale = 0.01
             
             return self.horizontal_irradiance * scale
