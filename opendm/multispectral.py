@@ -23,14 +23,20 @@ def dn_to_radiance(photo, image):
     """
 
     image = image.astype("float32")
-    if len(image.shape) != 3:
-        raise ValueError("Image should have shape length of 3 (got: %s)" % len(image.shape))
-    
+
     # Thermal (this should never happen, but just in case..)
     if photo.is_thermal():
         return image
 
-    # All others
+    # initial QA
+    if len(image.shape) != 3:
+        raise ValueError("%s: image should have shape length of 3 (got: %s)" % (photo.filename, len(image.shape)))
+    if np.isnan(image).any():
+        raise ValueError("%s: image has NaNs" % photo.filename)
+    if np.any(image < 0):
+        log.WARNING("%s: raw image has negative values; zeroing" % photo.filename)
+        image[image < 0] = 0
+    
     a1, a2, a3 = photo.get_radiometric_calibration()
     dark_level = photo.get_dark_level()
 
@@ -42,10 +48,12 @@ def dn_to_radiance(photo, image):
     if x is None:
         x, y = np.meshgrid(np.arange(photo.width), np.arange(photo.height))
 
+    # offset DNs by dark_level, and clip to zero
     if dark_level is not None:
         image -= dark_level
-
-    # Normalize DN to 0 - 1.0
+        image[image < 0] = 0
+    
+    # normalize offset DNs by the max bit depth
     bit_depth_max = photo.get_bit_depth_max()
     if bit_depth_max:
         image /= bit_depth_max
@@ -63,23 +71,29 @@ def dn_to_radiance(photo, image):
         R = np.repeat(R[:, :, np.newaxis], image.shape[2], axis=2)
         image *= R
     
-    # Floor any negative radiances to zero (can happen due to noise around blackLevel)
-    if dark_level is not None:
-        image[image < 0] = 0
-    
-    # apply the radiometric calibration - i.e. scale by the gain-exposure product and
-    # multiply with the radiometric calibration coefficient
-
+    # get scalar radiometric calibration factor
+    rad_cal = 1
     if gain is not None and exposure_time is not None:
-        image /= (gain * exposure_time)
-    
+        rad_cal /= (gain * exposure_time)
     if a1 is not None:
-        # multiply with the radiometric calibration coefficient
-        image *= a1
-
+        rad_cal *= a1
     if gain_adjustment is not None:
-        image *= gain_adjustment
+        rad_cal *= gain_adjustment
 
+    # apply calibration factor
+    if ( rad_cal < 0 or np.isnan(rad_cal) ):
+        log.WARNING("%s: radiometric calibration < 0 or isNaN; ignoring" % photo.filename)
+    else:
+        image *= rad_cal
+
+    # final QA
+    if np.isnan(image).any():
+        raise ValueError("%s: computed radiance has NaNs" % photo.filename)
+    if np.any(image < 0):
+        log.WARNING("%s: computed radiance has negative values; zeroing" % photo.filename)
+        image[image < 0] = 0
+
+    # validated radiance values should be in the interval [0,+inf)
     return image
 
 def vignette_map(photo):
@@ -115,11 +129,17 @@ def vignette_map(photo):
     return None, None, None
 
 def dn_to_reflectance(photo, image, use_sun_sensor=True):
+    # get radiance values from raw image DNs, validated to be in the interval [0,+inf)
     radiance = dn_to_radiance(photo, image)
+    # normalize radiance by irradience to get reflectance
     irradiance = compute_irradiance(photo, use_sun_sensor=use_sun_sensor)
-    reflectance = radiance * math.pi / irradiance
-    reflectance[reflectance < 0.0] = 0.0
-    reflectance[reflectance > 1.0] = 1.0
+    reflectance = radiance / irradiance
+    # Legacy reflectance code had a factor of pi, which is not found in DJI's M3M guide.
+    # Unsure about other models, so keep it for now. TODO: check provenance of the pi factor
+    if not photo.is_make_model("DJI", "M3M"):
+        reflectance *= math.pi
+    # Reflectance values are relative, and therefore in the interval [0,+inf); they are not
+    # necessarily capped at 1.0 unless the spectral channels are absolutely calibrated
     return reflectance.astype("float32")
 
 def compute_irradiance(photo, use_sun_sensor=True):
