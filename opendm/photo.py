@@ -429,10 +429,16 @@ class ODM_Photo:
                         ], float)
 
                     # DJI MS
-                    if self.black_level is None and 'Camera:BlackCurrent' in xtags:
+                    # for M3M, use @drone-dji:BlackLevel if available
+                    if self.is_make_model("DJI", "M3M") and '@drone-dji:BlackLevel' in xtags:
                         self.set_attr_from_xmp_tag('black_level', xtags, [
+                            '@drone-dji:BlackLevel'
+                        ], str)
+                    elif self.black_level is None and 'Camera:BlackCurrent' in xtags:
+                            self.set_attr_from_xmp_tag('black_level', xtags, [
                             'Camera:BlackCurrent'
                         ], str)
+                    # use exposure_time from @drone-dji, if available, because it's more precise
                     if '@drone-dji:ExposureTime' in xtags:
                         self.set_attr_from_xmp_tag('exposure_time', xtags, [
                             '@drone-dji:ExposureTime'
