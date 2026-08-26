@@ -62,7 +62,7 @@ def dn_to_radiance(photo, image):
         R = 1.0 / (1.0 + a2 * y / exposure_time - a3 * y)
         R = np.repeat(R[:, :, np.newaxis], image.shape[2], axis=2)
         image *= R
-    
+   
     # Floor any negative radiances to zero (can happen due to noise around blackLevel)
     if dark_level is not None:
         image[image < 0] = 0
@@ -640,7 +640,7 @@ def resize_match(image, dimension):
         fy = mh/h
         image = cv2.resize(image, None, 
                 fx=fx, 
-                fy=fx,
+                fy=fy,
                 interpolation=(cv2.INTER_AREA if (fx < 1.0 and fy < 1.0) else cv2.INTER_LANCZOS4))
 
     return image
