@@ -109,6 +109,13 @@ class ODMOrthoPhotoStage(types.ODM_Stage):
                        '-outputCornerFile "{corners}" {bands} {depth_idx} {inpaint} '
                        '{utm_offsets} {a_srs} {vars} {gdal_configs} '.format(**kwargs), env_vars={'OMP_NUM_THREADS': args.max_concurrency})
 
+            # Multispectral reflectance values should never be negative, so catch, warn and zero
+            # any that slipped through before any further cutline/feathering/tiling steps
+            # operate on this raster. Typically, these will have been avoided in previous stages. However, if they
+            # show up in this stage, then we should figure out why and fix the problem (not just the symptom)
+            if reconstruction.multi_camera:
+                orthophoto.clamp_negative_pixels(kwargs['ortho'])
+
             # Create georeferenced GeoTiff
             if reconstruction.is_georeferenced():
                 bounds_file_path = os.path.join(tree.odm_georeferencing, 'odm_georeferenced_model.bounds.gpkg')

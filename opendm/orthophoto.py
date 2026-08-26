@@ -19,6 +19,38 @@ from osgeo import gdal
 from osgeo import ogr
 
 
+def clamp_negative_pixels(raster_path):
+    """
+    Checks a raster (georeferenced or not, any number of bands) for negative
+    pixel values. If any are found, they are zeroed in place on disk and a
+    warning is logged.
+
+    Uses rasterio (rather than osgeo.gdal's Band.ReadAsArray/WriteArray) since
+    the latter lazily imports osgeo.gdal_array, a separate compiled extension
+    that can be ABI-incompatible with the installed numpy in some environments.
+    :return the total number of negative pixels found (and zeroed) across all bands
+    """
+    if not io.file_exists(raster_path):
+        return 0
+
+    total_negative = 0
+    try:
+        with rasterio.open(raster_path, 'r+') as ds:
+            arr = ds.read()
+            negative = arr < 0
+            total_negative = int(np.count_nonzero(negative))
+            if total_negative > 0:
+                arr[negative] = 0
+                ds.write(arr)
+    except Exception as e:
+        log.WARNING("Cannot open %s to check for negative pixel values: %s" % (raster_path, str(e)))
+        return 0
+
+    if total_negative > 0:
+        log.WARNING("%s: found and zeroed %s negative pixel values" % (raster_path, total_negative))
+
+    return total_negative
+
 def get_orthophoto_vars(args):
     return {
         'TILED': 'NO' if args.orthophoto_no_tiled else 'YES',

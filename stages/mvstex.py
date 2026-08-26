@@ -5,6 +5,7 @@ from opendm import io
 from opendm import system
 from opendm import context
 from opendm import types
+from opendm import orthophoto
 from opendm.multispectral import get_primary_band_name
 from opendm.photo import find_largest_photo_dim
 from opendm.objpacker import obj_pack
@@ -135,6 +136,13 @@ class ODMMvsTexStage(types.ODM_Stage):
                         '{labelingFile} '
                         '{numThreads} '
                         '{maxTextureSize} '.format(**kwargs))
+
+                # For multispectral data, check the resulting texture atlases for negative pixel
+                # values (reflectances should be >= 0). Warn and zero if any found. Typically, disabling global and local
+                # seam leveling avoids negative pixel values, but force an explicit clamp in case something slips by
+                if reconstruction.multi_camera:
+                    for texfile in glob.glob(kwargs['out_dir'] + "*.tif"):
+                        orthophoto.clamp_negative_pixels(texfile)
 
                 if r['primary'] and (not r['nadir'] or args.skip_3dmodel):
                     # Single material?
