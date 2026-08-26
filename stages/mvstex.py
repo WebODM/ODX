@@ -1,4 +1,4 @@
-import os, shutil
+import os, shutil, glob
 
 from opendm import log
 from opendm import io
@@ -80,11 +80,18 @@ class ODMMvsTexStage(types.ODM_Stage):
 
                 # Format arguments to fit Mvs-Texturing app
                 skipGlobalSeamLeveling = ""
+                skipLocalSeamLeveling = ""
                 keepUnseenFaces = ""
                 nadir = ""
 
-                if args.texturing_skip_global_seam_leveling:
+                # for multispectral data, force disabling of global seam leveling to avoid negative texture and reflectance values,
+                # or if user requested disabling for RGB/thermal data
+                if reconstruction.multi_camera or args.texturing_skip_global_seam_leveling:
                     skipGlobalSeamLeveling = "--skip_global_seam_leveling"
+                # for multispectral data, force disabling of local seam leveling to avoid negative texture and reflectance values
+                if reconstruction.multi_camera:
+                    skipLocalSeamLeveling = "--skip_local_seam_leveling"
+                # TODO: allow user-requested --skip_local_seam_leveling for RGB/thermal data?
                 if args.texturing_keep_unseen_faces:
                     keepUnseenFaces = "--keep_unseen_faces"
                 if (r['nadir']):
@@ -98,6 +105,7 @@ class ODMMvsTexStage(types.ODM_Stage):
                     'dataTerm': 'gmi',
                     'outlierRemovalType': 'gauss_clamping',
                     'skipGlobalSeamLeveling': skipGlobalSeamLeveling,
+                    'skipLocalSeamLeveling': skipLocalSeamLeveling,
                     'keepUnseenFaces': keepUnseenFaces,
                     'toneMapping': 'none',
                     'nadirMode': nadir,
@@ -121,6 +129,7 @@ class ODMMvsTexStage(types.ODM_Stage):
                         '-t {toneMapping} '
                         '{intermediate} '
                         '{skipGlobalSeamLeveling} '
+                        '{skipLocalSeamLeveling} '
                         '{keepUnseenFaces} '
                         '{nadirMode} '
                         '{labelingFile} '
