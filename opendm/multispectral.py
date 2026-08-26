@@ -597,13 +597,25 @@ def local_normalize(im):
     return im
 
 
-def align_image(image, warp_matrix, dimension):
+def align_image(image, photo, warp_matrix, dimension):
     image = resize_match(image, dimension)
+    if np.any(image < 0):
+        log.WARNING("%s: align_image: image after resize_match has negative values; zeroing" % photo.filename)
+        image[image < 0] = 0
 
+    # Default args for warpPerspective and warpAffine (flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+    # borderValue=0) can produce a sharp gradient. Use borderMode=cv2.BORDER_REPLICATE to avoid such artifacts.
     if warp_matrix.shape == (3, 3):
-        return cv2.warpPerspective(image, warp_matrix, dimension)
+        image = cv2.warpPerspective(image, warp_matrix, dimension, flags=cv2.INTER_LINEAR,
+                                    borderMode=cv2.BORDER_REPLICATE)
     else:
-        return cv2.warpAffine(image, warp_matrix, dimension)
+        image = cv2.warpAffine(image, warp_matrix, dimension, flags=cv2.INTER_LINEAR,
+                               borderMode=cv2.BORDER_REPLICATE)
+    if np.any(image < 0):
+        log.WARNING("%s: align_image: image after warping has negative values; zeroing" % photo.filename)
+        image[image < 0] = 0
+    
+    return image
 
 
 def to_8bit(image, force_normalize=False):

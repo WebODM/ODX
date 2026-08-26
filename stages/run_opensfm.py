@@ -132,7 +132,7 @@ class ODMOpenSfMStage(types.ODM_Stage):
 
             ainfo = alignment_info.get(photo.band_name)
             if ainfo is not None:
-                return multispectral.align_image(image, ainfo['warp_matrix'], ainfo['dimension'])
+                return multispectral.align_image(image, photo, ainfo['warp_matrix'], ainfo['dimension'])
             else:
                 log.WARNING("Cannot align %s, no alignment matrix could be computed. Band alignment quality might be affected." % (shot_id))
                 return image
