@@ -22,6 +22,7 @@ RS_DATABASE = {
     'hasselblad l2d-20c': 16.6, # DJI Mavic 3 (not enterprise version)
 
     'dji fc3682': 23, # DJI Mini 3
+    'dji fc9589': 18, # DJI Lito X1
 
     'dji fc3582': lambda p: 26 if p.get_capture_megapixels() < 48 else 60, # DJI Mini 3 pro (at 48MP readout is 60ms, at 12MP it's 26ms) 
     'dji fc8482': lambda p: (
