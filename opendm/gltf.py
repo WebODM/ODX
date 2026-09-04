@@ -300,7 +300,7 @@ def obj2glb(input_obj, output_glb, rtc=(None, None), draco_compression=True, _in
         _info("Compressing with draco")
         try:
             compressed_glb = io.related_file_path(output_glb, postfix="_compressed")
-            system.run('draco_transcoder -i "{}" -o "{}" -qt 16 -qp 16'.format(output_glb, compressed_glb))
+            system.run('draco_transcoder -i "{}" -o "{}" -qt 16 -qp 16 -unified_quantization'.format(output_glb, compressed_glb))
             if os.path.isfile(compressed_glb) and os.path.isfile(output_glb):
                 os.remove(output_glb)
                 os.rename(compressed_glb, output_glb)
