@@ -399,7 +399,7 @@ class ODM_Photo:
                     # Phantom 4 RTK
                     if '@drone-dji:RtkStdLon' in xtags:
                         rtk_flag = self.get_xmp_tag(xtags, '@drone-dji:RtkFlag')
-                        if rtk_flag is None or int(float(rtk_flag)) == 50: # 50 = RTK fixed
+                        if rtk_flag is None or int(float(rtk_flag)) > 0:
                             y = float(self.get_xmp_tag(xtags, '@drone-dji:RtkStdLon'))
                             x = float(self.get_xmp_tag(xtags, '@drone-dji:RtkStdLat'))
                             self.gps_xy_stddev = max(x, y)
@@ -850,7 +850,7 @@ class ODM_Photo:
 
             dop = self.get_gps_dop()
             if dop is None:
-                dop = [gps_accuracy, gps_accuracy * 3]
+                dop = [gps_accuracy, gps_accuracy]
             
             gps['latitude_std'] = dop[0]
             gps['longitude_std'] = dop[0]
