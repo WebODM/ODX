@@ -359,17 +359,20 @@ class ODM_Photo:
 
                     self.set_attr_from_xmp_tag('capture_uuid', xtags, [
                         '@drone-dji:CaptureUUID', # DJI
+                        'drone-dji:CaptureUUID', # DJI
                         'MicaSense:CaptureId', # MicaSense Altum
                         '@Camera:ImageUniqueID', # sentera 6x
                         '@Camera:CaptureUUID', # Parrot Sequoia
                     ])
 
                     self.set_attr_from_xmp_tag('gain', xtags, [
-                        '@drone-dji:SensorGain'
+                        '@drone-dji:SensorGain',
+                        'drone-dji:SensorGain'
                     ], float)
 
                     self.set_attr_from_xmp_tag('gain_adjustment', xtags, [
-                        '@drone-dji:SensorGainAdjustment'
+                        '@drone-dji:SensorGainAdjustment',
+                        'drone-dji:SensorGainAdjustment'
                     ], float)
 
                     # Camera make / model for some cameras is stored in the XMP
@@ -384,28 +387,36 @@ class ODM_Photo:
 
                     # DJI GPS tags
                     self.set_attr_from_xmp_tag('longitude', xtags, [
-                        '@drone-dji:Longitude'
+                        '@drone-dji:Longitude',
+                        'drone-dji:Longitude',
+                        '@drone-dji:GpsLongitude',
+                        'drone-dji:GpsLongitude'
                     ], float)
                     self.set_attr_from_xmp_tag('latitude', xtags, [
-                        '@drone-dji:Latitude'
+                        '@drone-dji:Latitude',
+                        'drone-dji:Latitude',
+                        '@drone-dji:GpsLatitude',
+                        'drone-dji:GpsLatitude'
                     ], float)
                     self.set_attr_from_xmp_tag('altitude', xtags, [
-                        '@drone-dji:AbsoluteAltitude'
+                        '@drone-dji:AbsoluteAltitude',
+                        'drone-dji:AbsoluteAltitude'
                     ], float)
                     self.set_attr_from_xmp_tag('relative_altitude', xtags, [
-                        '@drone-dji:RelativeAltitude'
+                        '@drone-dji:RelativeAltitude',
+                        'drone-dji:RelativeAltitude'
                     ], float)
 
                     # Phantom 4 RTK
-                    if '@drone-dji:RtkStdLon' in xtags:
-                        rtk_flag = self.get_xmp_tag(xtags, '@drone-dji:RtkFlag')
+                    if '@drone-dji:RtkStdLon' in xtags or 'drone-dji:RtkStdLon' in xtags:
+                        rtk_flag = self.get_xmp_tag(xtags, ['@drone-dji:RtkFlag', 'drone-dji:RtkFlag'])
                         if rtk_flag is None or int(float(rtk_flag)) > 0:
-                            y = float(self.get_xmp_tag(xtags, '@drone-dji:RtkStdLon'))
-                            x = float(self.get_xmp_tag(xtags, '@drone-dji:RtkStdLat'))
+                            y = float(self.get_xmp_tag(xtags, ['@drone-dji:RtkStdLon', 'drone-dji:RtkStdLon']))
+                            x = float(self.get_xmp_tag(xtags, ['@drone-dji:RtkStdLat', 'drone-dji:RtkStdLat']))
                             self.gps_xy_stddev = max(x, y)
 
-                            if '@drone-dji:RtkStdHgt' in xtags:
-                                self.gps_z_stddev = float(self.get_xmp_tag(xtags, '@drone-dji:RtkStdHgt'))
+                            if '@drone-dji:RtkStdHgt' in xtags or 'drone-dji:RtkStdHgt' in xtags:
+                                self.gps_z_stddev = float(self.get_xmp_tag(xtags, ['@drone-dji:RtkStdHgt', 'drone-dji:RtkStdHgt']))
                     else:
                         self.set_attr_from_xmp_tag('gps_xy_stddev', xtags, [
                             '@Camera:GPSXYAccuracy',
@@ -417,17 +428,20 @@ class ODM_Photo:
                         ], float)
                     
                     # DJI Speed tags
-                    if '@drone-dji:FlightXSpeed' in xtags and \
-                       '@drone-dji:FlightYSpeed' in xtags and \
-                       '@drone-dji:FlightZSpeed' in xtags:
+                    if ('@drone-dji:FlightXSpeed' in xtags or 'drone-dji:FlightXSpeed' in xtags) and \
+                       ('@drone-dji:FlightYSpeed' in xtags or 'drone-dji:FlightYSpeed' in xtags) and \
+                       ('@drone-dji:FlightZSpeed' in xtags or 'drone-dji:FlightZSpeed' in xtags):
                         self.set_attr_from_xmp_tag('speed_x', xtags, [
-                            '@drone-dji:FlightXSpeed'
+                            '@drone-dji:FlightXSpeed',
+                            'drone-dji:FlightXSpeed'
                         ], float)
                         self.set_attr_from_xmp_tag('speed_y', xtags, [
                             '@drone-dji:FlightYSpeed',
+                            'drone-dji:FlightYSpeed'
                         ], float)
                         self.set_attr_from_xmp_tag('speed_z', xtags, [
                             '@drone-dji:FlightZSpeed',
+                            'drone-dji:FlightZSpeed'
                         ], float)
 
                     # DJI MS
@@ -435,9 +449,10 @@ class ODM_Photo:
                         self.set_attr_from_xmp_tag('black_level', xtags, [
                             'Camera:BlackCurrent'
                         ], str)
-                    if '@drone-dji:ExposureTime' in xtags:
+                    if '@drone-dji:ExposureTime' in xtags or 'drone-dji:ExposureTime' in xtags:
                         self.set_attr_from_xmp_tag('exposure_time', xtags, [
-                            '@drone-dji:ExposureTime'
+                            '@drone-dji:ExposureTime',
+                            'drone-dji:ExposureTime'
                         ], float)
                         self.exposure_time /= 1e6 # is in microseconds
                     
@@ -465,9 +480,9 @@ class ODM_Photo:
                             self.camera_projection = camera_projection
 
                     # OPK
-                    self.set_attr_from_xmp_tag('yaw', xtags, ['@drone-dji:FlightYawDegree', '@Camera:Yaw', 'Camera:Yaw'], float)
-                    self.set_attr_from_xmp_tag('pitch', xtags, ['@drone-dji:GimbalPitchDegree', '@Camera:Pitch', 'Camera:Pitch'], float)
-                    self.set_attr_from_xmp_tag('roll', xtags, ['@drone-dji:GimbalRollDegree', '@Camera:Roll', 'Camera:Roll'], float)
+                    self.set_attr_from_xmp_tag('yaw', xtags, ['@drone-dji:FlightYawDegree', 'drone-dji:FlightYawDegree', '@Camera:Yaw', 'Camera:Yaw'], float)
+                    self.set_attr_from_xmp_tag('pitch', xtags, ['@drone-dji:GimbalPitchDegree', 'drone-dji:GimbalPitchDegree', '@Camera:Pitch', 'Camera:Pitch'], float)
+                    self.set_attr_from_xmp_tag('roll', xtags, ['@drone-dji:GimbalRollDegree', 'drone-dji:GimbalRollDegree', '@Camera:Roll', 'Camera:Roll'], float)
 
                     # Normalize YPR conventions (assuming nadir camera)
                     # Yaw: 0 --> top of image points north
