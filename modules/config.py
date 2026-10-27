@@ -53,7 +53,7 @@ rerun_stages = {
     'mesh_size': 'odm_meshing',
     'min_num_features': 'opensfm',
     'name': None,
-    'no_gpu': None,
+    'no_gpu': 'opensfm',
     'optimize_disk_space': None,
     'orthophoto_compression': 'odm_orthophoto',
     'orthophoto_cutline': 'odm_orthophoto',
