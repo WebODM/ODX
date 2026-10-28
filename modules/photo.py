@@ -456,12 +456,6 @@ class ODM_Photo:
                         ], float)
                         self.exposure_time /= 1e6 # is in microseconds
                     
-                    # Account for over-estimation
-                    if self.gps_xy_stddev is not None:
-                        self.gps_xy_stddev *= 2.0
-                    if self.gps_z_stddev is not None:
-                        self.gps_z_stddev *= 2.0
-
                     if 'DLS:Yaw' in xtags:
                         self.set_attr_from_xmp_tag('dls_yaw', xtags, ['DLS:Yaw'], float)
                         self.set_attr_from_xmp_tag('dls_pitch', xtags, ['DLS:Pitch'], float)
@@ -484,20 +478,6 @@ class ODM_Photo:
                     self.set_attr_from_xmp_tag('pitch', xtags, ['@drone-dji:GimbalPitchDegree', 'drone-dji:GimbalPitchDegree', '@Camera:Pitch', 'Camera:Pitch'], float)
                     self.set_attr_from_xmp_tag('roll', xtags, ['@drone-dji:GimbalRollDegree', 'drone-dji:GimbalRollDegree', '@Camera:Roll', 'Camera:Roll'], float)
 
-                    # Normalize YPR conventions (assuming nadir camera)
-                    # Yaw: 0 --> top of image points north
-                    # Yaw: 90 --> top of image points east
-                    # Yaw: 270 --> top of image points west
-                    # Pitch: 0 --> nadir camera
-                    # Pitch: 90 --> camera is looking forward
-                    # Roll: 0 (assuming gimbal)
-                    if self.has_ypr():
-                        if self.camera_make.lower() in ['dji', 'hasselblad']:
-                            self.pitch = 90 + self.pitch
-                    
-                        if self.camera_make.lower() == 'sensefly':
-                            self.roll *= -1
-
                 except Exception as e:
                     log.WARNING("Cannot read XMP tags for %s: %s" % (self.filename, str(e)))
 
@@ -508,6 +488,26 @@ class ODM_Photo:
                 # self.set_attr_from_xmp_tag('bandwidth', xtags, [
                 #     'Camera:WavelengthFWHM'
                 # ], float)
+
+            # Account for over-estimation
+            if self.gps_xy_stddev is not None:
+                self.gps_xy_stddev *= 2.0
+            if self.gps_z_stddev is not None:
+                self.gps_z_stddev *= 2.0
+
+            # Normalize YPR conventions (assuming nadir camera)
+            # Yaw: 0 --> top of image points north
+            # Yaw: 90 --> top of image points east
+            # Yaw: 270 --> top of image points west
+            # Pitch: 0 --> nadir camera
+            # Pitch: 90 --> camera is looking forward
+            # Roll: 0 (assuming gimbal)
+            if self.has_ypr():
+                if self.camera_make.lower() in ['dji', 'hasselblad']:
+                    self.pitch = 90 + self.pitch
+
+                if self.camera_make.lower() == 'sensefly':
+                    self.roll *= -1
         
         # Special case band handling for AeroVironment Quantix images
         # for some reason, they don't store band information in EXIFs
