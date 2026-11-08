@@ -6,7 +6,7 @@
 
 > **If you like ODX, take a second and ⭐ the project 🙏**
 
-A free and open source photogrammetry engine for processing aerial and ground imagery. ODX turns images into:
+Your free and open source photogrammetry engine for processing aerial and ground imagery. ODX turns images into:
 
 * Classified Point Clouds
 * 3D Textured Models
