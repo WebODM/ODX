@@ -81,15 +81,22 @@ class ODMOpenSfMStage(types.ODM_Stage):
 
         updated_config_flag_file = octx.path('updated_config.txt')
 
+        divider = 1
+        if args.camera_lens in ["equirectangular", "spherical"]:
+            divider = 4
+
         # Make sure it's capped by the depthmap-resolution arg,
         # since the undistorted images are used for MVS
         outputs['undist_image_max_size'] = max(
-            gsd.image_max_size(photos, args.orthophoto_resolution, tree.opensfm_reconstruction, ignore_gsd=args.ignore_gsd, has_gcp=reconstruction.has_gcp()),
+            gsd.image_max_size(photos, args.orthophoto_resolution, tree.opensfm_reconstruction, ignore_gsd=args.ignore_gsd, has_gcp=reconstruction.has_gcp()) // divider,
             get_depthmap_resolution(args, photos)
         )
 
         if not io.file_exists(updated_config_flag_file) or self.rerun():
-            octx.update_config({'undistorted_image_max_size': outputs['undist_image_max_size']})
+            octx.update_config({
+                'undistorted_image_max_size': outputs['undist_image_max_size'],
+                'depthmap_resolution': outputs['undist_image_max_size'],
+            })
             octx.touch(updated_config_flag_file)
 
         # Undistorted images will be used for texturing / MVS
