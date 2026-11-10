@@ -19,3 +19,4 @@ Licensing for portions of ODX are as follows:
 * libext - https://github.com/WebODM/ODX/blob/gh-pages/licenses/libext_copyright.txt
 * libx11 - https://github.com/WebODM/ODX/blob/gh-pages/licenses/libx11_copyright.txt
 * MVS Texturing - BSD - https://github.com/nmoehrle/mvs-texturing/blob/master/LICENSE.txt
+* jemalloc - BSD2 - https://jemalloc.net/
