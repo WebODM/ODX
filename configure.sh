@@ -91,6 +91,7 @@ installruntimedeps() {
             libopenjpip7 \
             liblapack3 \
             libtcmalloc-minimal4t64 \
+            libjemalloc2 \
             libpng16-16 \
             libproj25 \
             libswscale7 \
