@@ -64,6 +64,11 @@ class ODMMvsTexStage(types.ODM_Stage):
         progress_per_run = 100.0 / len(nonloc.runs)
         progress = 0.0
 
+        # Tune mimalloc (Windows only)
+        texrecon_env = {}
+        if sys.platform == 'win32' and 'MIMALLOC_PURGE_DELAY' not in os.environ:
+            texrecon_env['MIMALLOC_PURGE_DELAY'] = '-1'
+
         for r in nonloc.runs:
             if not io.dir_exists(r['out_dir']):
                 system.mkdir_p(r['out_dir'])
@@ -125,7 +130,7 @@ class ODMMvsTexStage(types.ODM_Stage):
                         '{nadirMode} '
                         '{labelingFile} '
                         '{numThreads} '
-                        '{maxTextureSize} '.format(**kwargs))
+                        '{maxTextureSize} '.format(**kwargs), env_vars=texrecon_env)
 
                 if r['primary'] and (not r['nadir'] or args.skip_3dmodel):
                     # Single material?
