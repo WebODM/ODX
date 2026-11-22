@@ -13,9 +13,6 @@ import stat
 import urllib.request
 import shutil 
 import zipfile
-import tarfile
-import hashlib
-import glob
 
 parser = argparse.ArgumentParser(description='ODX Windows Configure Script')
 parser.add_argument('action',
@@ -198,33 +195,12 @@ def dist():
         with zipfile.ZipFile(innosetupzip_path) as z:
             z.extractall("innosetup")
 
-    # Use mimalloc as the memory allocator of every program and of Python
-    mimalloc_dir = os.path.join("SuperBuild", "download", "mimalloc")
-    if not os.path.isdir(mimalloc_dir):
-        mimalloc_path = os.path.join("SuperBuild", "download", "mimalloc.tar.gz")
-        mimalloc_url = "https://github.com/microsoft/mimalloc/releases/download/v3.7.0/mimalloc-v2.5.3-windows-x64.tar.gz"
-        if not os.path.exists(mimalloc_path):
-            print("Downloading %s" % mimalloc_url)
-            with urllib.request.urlopen(mimalloc_url) as response, open(mimalloc_path, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-        with open(mimalloc_path, 'rb') as f:
-            if hashlib.sha256(f.read()).hexdigest() != "1403953c3b9357ad21bc41d9aea4020ce37f47d260b3beb472a834d153ed75e7":
-                print("Checksum mismatch: %s" % mimalloc_path)
-                exit(1)
-
-        print("Extracting --> %s" % mimalloc_dir)
-        with tarfile.open(mimalloc_path) as t:
-            t.extractall(mimalloc_dir, filter='data')
-
-    mimalloc_bin = os.path.join(mimalloc_dir, "bin")
+    # Python loads mimalloc like the SuperBuild's programs (SuperBuild/cmake/External-Mimalloc.cmake)
+    mimalloc_bin = os.path.join("SuperBuild", "src", "mimalloc", "bin")
+    for dll in ["mimalloc.dll", "mimalloc-redirect.dll"]:
+        shutil.copy(os.path.join(mimalloc_bin, dll), "python312")
     # minject often crashes when given relative paths: give it absolute ones
-    minject = os.path.abspath(os.path.join(mimalloc_bin, "minject.exe"))
-    for d in [os.path.join("SuperBuild", "install", "bin"), os.path.join("SuperBuild", "install", "bin", "OpenMVS"), "python312"]:
-        for dll in ["mimalloc.dll", "mimalloc-redirect.dll"]:
-            shutil.copy(os.path.join(mimalloc_bin, dll), d)
-        for exe in glob.glob(os.path.join(d, "*.exe")):
-            if os.path.basename(exe) != "exiftool.exe":
-                run("\"%s\" --force --inplace \"%s\"" % (minject, os.path.abspath(exe)), quiet=True)
+    run("\"%s\" --force --inplace \"%s\"" % (os.path.abspath(os.path.join(mimalloc_bin, "minject.exe")), os.path.abspath(os.path.join("python312", "python.exe"))), quiet=True)
 
     # Run
     cs_flags = '/DSKIP_SIGN=1'

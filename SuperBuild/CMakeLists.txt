@@ -254,3 +254,8 @@ externalproject_add(draco
                       -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR} 
                       ${WIN32_CMAKE_ARGS}
 )
+
+# Last, as it patches every program built above
+if (WIN32)
+    include(External-Mimalloc)
+endif()
