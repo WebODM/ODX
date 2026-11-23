@@ -66,8 +66,8 @@ class ODMMvsTexStage(types.ODM_Stage):
 
         # Tune mimalloc (Windows only)
         texrecon_env = {}
-        if sys.platform == 'win32' and 'MIMALLOC_PURGE_DELAY' not in os.environ:
-            texrecon_env['MIMALLOC_PURGE_DELAY'] = '-1'
+        if sys.platform == 'win32' and 'MIMALLOC_PURGE_DECOMMITS' not in os.environ:
+            texrecon_env['MIMALLOC_PURGE_DECOMMITS'] = '0'
 
         for r in nonloc.runs:
             if not io.dir_exists(r['out_dir']):
