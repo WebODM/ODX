@@ -1,4 +1,4 @@
-import os, shutil
+import os, shutil, sys
 
 from modules import log
 from modules import io
@@ -64,6 +64,10 @@ class ODMMvsTexStage(types.ODM_Stage):
         progress_per_run = 100.0 / len(nonloc.runs)
         progress = 0.0
 
+        env_vars = {}
+        if sys.platform == 'win32'
+            env_vars['MIMALLOC_PURGE_DECOMMITS'] = '0'
+
         for r in nonloc.runs:
             if not io.dir_exists(r['out_dir']):
                 system.mkdir_p(r['out_dir'])
@@ -125,7 +129,7 @@ class ODMMvsTexStage(types.ODM_Stage):
                         '{nadirMode} '
                         '{labelingFile} '
                         '{numThreads} '
-                        '{maxTextureSize} '.format(**kwargs))
+                        '{maxTextureSize} '.format(**kwargs), env_vars=env_vars)
 
                 if r['primary'] and (not r['nadir'] or args.skip_3dmodel):
                     # Single material?

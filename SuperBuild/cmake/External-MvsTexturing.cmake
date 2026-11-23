@@ -9,7 +9,7 @@ ExternalProject_Add(${_proj_name}
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}/${_proj_name}
   GIT_REPOSITORY    https://github.com/WebODM/mvs-texturing
-  GIT_TAG           a56b5e7f95f0bb1dd1e1eb89ce5da202349c0e01
+  GIT_TAG           5c7a317a3e4200171ddbe3e0c81a2bac418e3506
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------
