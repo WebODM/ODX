@@ -157,10 +157,6 @@ set(custom_libs Abseil
 				ExifTool
 				RenderDEM
 )
-if (WIN32)
-    # Replace default allocator
-    list(APPEND custom_libs Mimalloc)
-endif()
 
 externalproject_add(mve
     GIT_REPOSITORY  https://github.com/WebODM/mve.git
