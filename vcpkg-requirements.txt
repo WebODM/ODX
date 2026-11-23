@@ -22,3 +22,4 @@ boost-program-options:x64-windows
 libgeotiff:x64-windows
 cgal:x64-windows
 yasm-tool:x86-windows
+mimalloc[override]:x64-windows
