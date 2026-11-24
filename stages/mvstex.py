@@ -65,7 +65,7 @@ class ODMMvsTexStage(types.ODM_Stage):
         progress = 0.0
 
         env_vars = {}
-        if sys.platform == 'win32'
+        if sys.platform == 'win32':
             env_vars['MIMALLOC_PURGE_DECOMMITS'] = '0'
 
         for r in nonloc.runs:
