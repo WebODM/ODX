@@ -22,7 +22,7 @@ jobs:
       run: .\vcpkg\vcpkg.exe export --zip --output=vcpkg-export --output-dir=.
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: vcpkg-env-x64-windows
         path: vcpkg-export.zip
+        archive: false
