@@ -32,6 +32,8 @@ RS_DATABASE = {
         58                                          # 48MP 4:3 mode (actual 48.8MP)
     ), # DJI Mini 4 Pro (readout varies by resolution and aspect ratio, image heights all different)
     
+    'dji fc9313': lambda p: 30 if p.get_capture_megapixels() < 25 else 45, # DJI Mini 5 Pro (12.5MP 4:3: 29.8ms, 50MP 4:3: 45.2ms)
+    
     'dji fc350': 30, # Inspire 1
     
     'dji mavic2-enterprise-advanced': 31, # DJI Mavic 2 Enterprise Advanced
